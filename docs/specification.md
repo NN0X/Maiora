@@ -223,7 +223,7 @@ entry sint64 main(none)
     return 0s;
 }
 ```
-IMPORTANT: Public variables are available from the moment their associated function is called. Their scope is defined by entry function. It is recommended that public variables are only used in entry function.
+IMPORTANT: Public variables are available from the moment their associated function is called. Their scope is defined by the entry function. It is recommended that public variables are only used in entry function.
 
 IMPORTANT: If public variable is declared in a non-entry function they are overwritten every time the function is called. This means that if you call the function multiple times the variable will be instantiated multiple times, which limits performance as it requires getting rid of the previous instance of the variable.
 
@@ -292,6 +292,86 @@ or by importing only log function:
 entry sint64 main(none)
 {
     log(none);
+    return 0s;
+}
+```
+
+## Key concepts
+
+### Functions as data objects
+
+In contrast to C/C++ and similar languages, Maiora does not have a concept of a structure or class. Instead, it uses functions as data objects. This means that functions can be passed as arguments to other functions, returned from functions, and stored in variables.
+
+Example of a function that takes on a job similar to a class or structure:
+```maiora
+private none initPerson(ascii name, uint16 age)
+{
+    private ascii personName = name;
+    private uint16 personAge = age;
+
+    private none printPerson(none)
+    {
+        IO::print(ascii"Name: {personName}, Age: {personAge}");
+    }
+}
+
+entry sint64 main(none)
+{
+    private instance personInstance1 = initPerson(ascii"John Doe", 30u);
+    private instance personInstance2 = initPerson(ascii"Jane Smith", 25u);
+
+    personInstance1.printPerson(none); // Output: Name: John Doe, Age: 30
+    personInstance2.printPerson(none); // Output: Name: Jane Smith, Age: 25
+
+    return 0s;
+}
+```
+
+Example of a function that takes another function as an argument:
+```maiora
+private none executeFunctionWithNoReturn(function none f)
+{
+    IO::print(ascii"Executing function...");
+    call f;
+    IO::print(ascii"Function executed.");
+}
+
+private none executeFunctionWithReturn(function sint64 f)
+{
+    IO::print(ascii"Executing function...");
+    private sint64 var = call f;
+    IO::print(ascii"Function executed.");
+    IO::print(ascii"Return value: {var}");
+}
+
+private none executeFunctionWithArgs(function none f)
+{
+    IO::print(ascii"Executing function with arguments...");
+    call f;
+    IO::print(ascii"Function executed with arguments.");
+}
+
+entry sint64 main(none)
+{
+    private none printHello(none)
+    {
+        IO::print(ascii"Hello, Maiora!");
+    }
+
+    private sint64 returnValue(none)
+    {
+        return 42s;
+    }
+
+    private none printArgs(ascii arg1, uint16 arg2)
+    {
+        IO::print(ascii"Arguments: {arg1}, {arg2}");
+    }
+
+    executeFunctionWithNoReturn(printHello(none));
+    executeFunctionWithReturn(returnValue(none));
+    executeFunctionWithArgs(printArgs(ascii"Argument 1", 123u));
+
     return 0s;
 }
 ```

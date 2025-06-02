@@ -1,0 +1,58 @@
+#import IO.print
+
+#use Vector3
+
+implement none initVector3(integer px, integer py, integer pz)
+{
+        private integer x = px;
+        private integer y = py;
+        private integer z = pz;
+
+        public integer getX()
+        {
+                return x;
+        }
+
+        public integer getY()
+        {
+                return y;
+        }
+
+        public integer getZ()
+        {
+                return z;
+        }
+
+        public none setX(integer newX)
+        {
+                x = newX;
+        }
+
+        public none setY(integer newY)
+        {
+                y = newY;
+        }
+
+        public none setZ(integer newZ)
+        {
+                z = newZ;
+        }
+
+        public none print()
+        {
+                print(ascii"Vector3: {x}, {y}, {z}");
+        }
+}
+
+entry sint64 main(none)
+{
+        private instance v = initVector3(1s, 2s, 3s);
+        v.print();
+
+        v.setX(10);
+        v.setY(20);
+        v.setZ(30);
+        v.print();
+
+        return 0s;
+}
