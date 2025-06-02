@@ -1,0 +1,13 @@
+#import IO.print
+
+// `main` is the entry point of the program with no arguments provided in this case
+// `main` in this case returns a 64-bit signed integer
+// `main` has to be declared with entry keyword
+// `main` can be named anything, but it is conventional to use `main`
+
+entry sint64 main(none)
+{
+        print(ascii"Hello, world!");
+
+        return 0s;
+}
