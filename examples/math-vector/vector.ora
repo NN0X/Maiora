@@ -1,8 +1,0 @@
-#import IO.print
-
-#begin Vector3
-
-type integer = sint32|uint32;
-declare none initVector3(integer px, integer py, integer pz);
-
-#end Vector3

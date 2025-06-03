@@ -1,0 +1,51 @@
+#module vector
+
+#type integer = sint64|uint64
+
+pack none vector(uint64 psize)
+{
+        private address integer data = heap psize*[0]; // allocate psize elements with 0 initialization
+
+        public uint64 reserved = size;
+        public uint64 size = 0;
+
+        public none push(integer value)
+        {
+                if (size == reserved)
+                {
+                        reserved = reserved * 2;
+                        free data;
+                        data = heap reserved*[0]; // reallocate with double size
+                }
+                data[size] = value; // store the value at the current size index
+                size++;
+        }
+
+        public none pop()
+        {
+                if (size > 0)
+                {
+                        size--;
+                        data[size] = 0; // clear the value at the current size index
+                }
+        }
+
+        public integer get(uint64 index)
+        {
+                return data[index];
+        }
+
+        public none set(uint64 index, integer value)
+        {
+                data[index] = value;
+        }
+
+        public none clear()
+        {
+                size = 0; // reset size to 0
+                for (uint64 i = 0; i < reserved; i++)
+                {
+                        data[i] = 0; // clear all elements
+                }
+        }
+}

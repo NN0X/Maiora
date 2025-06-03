@@ -1,0 +1,34 @@
+#import IO.print
+#import vector as *
+
+entry sint64 main(none)
+{
+        private instance vec = vector(4u); // create a vector with initial size 4
+        vec.push(10u);
+        vec.push(20u);
+        vec.push(30u);
+        vec.push(40u);
+        vec.push(50u); // this will trigger a resize since the initial size is 4
+        vec.push(60u); // add another element to see the resizing effect
+        vec.push(70u); // add another element to see the resizing effect
+
+        for (uint64 i = 0u; i < vec.size; i++)
+        {
+                print(ascii"Element at index {i} = {vec.get(i)}");
+        }
+
+        print(ascii"Vector size after additions = {vec.size}");
+        print(ascii"Vector reserved size after additions = {vec.reserved}");
+        vec.pop(); // remove the last element
+        print(ascii"Vector size after pop = {vec.size}");
+
+        vec.clear(); // clear the vector
+        print(ascii"Vector size after clear = {vec.size}");
+
+        for (uint64 i = 0u; i < vec.reserved; i++)
+        {
+                print(ascii"Element at index {i} after clear = {vec.get(i)}");
+        }
+
+        return 0s;
+}

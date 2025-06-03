@@ -3,8 +3,9 @@
 private uint64 openFile(ascii path)
 {
         private instance file = IO::openFile(path);
-        bool isOpen = return file;
-        if (!isOpen) {
+        bool isOpen = file.return;
+        if (!isOpen)
+        {
                 IO::printerr(ascii"Failed to open file: {path}\n");
                 return 0u;
         }

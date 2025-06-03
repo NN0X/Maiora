@@ -3,7 +3,7 @@ syntax clear
 " -----------------------
 " Keywords & Control Flow
 " -----------------------
-syntax keyword maioraKeyword public private entry declare implement
+syntax keyword maioraKeyword public private entry pack instance as function address at heap
 syntax keyword maioraControl if else while for return
 
 " -----------------------
@@ -12,9 +12,11 @@ syntax keyword maioraControl if else while for return
 syntax keyword maioraType sint64 sint32 sint16 sint8 uint64 uint32 uint16 uint8 bool none ascii
 
 " -----------------------
-" Import Statements
+" Preprocessor Statements
 " -----------------------
 syntax match maioraImport "^#import\s\+\S\+"
+syntax match maioraModulePre "^#module\s\+\S\+"
+syntax match maioraTypePre "^#type\s\+\S\+"
 
 " -----------------------
 " Function Definitions
@@ -60,6 +62,8 @@ highlight link maioraKeyword Keyword
 highlight link maioraControl Identifier
 highlight link maioraType Type
 highlight link maioraImport PreProc
+highlight link maioraModulePre PreProc
+highlight link maioraTypePre PreProc
 highlight link maioraFunctionDef Function
 highlight link maioraFunctionCall Function
 highlight link maioraModule Structure

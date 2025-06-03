@@ -1,0 +1,19 @@
+#import IO.print
+
+entry sint64 main(none)
+{
+        address sint64 valueAddr = heap 64s;
+        address uint64 heapArray = heap [64s, 54s, 44s, 34s, 24s];
+
+        print(ascii"Address of valueAddr = {valueAddr}");
+        print(ascii"Value at valueAddr = {at valueAddr}");
+        for (uint64 i = 0u; i < 5; i++)
+        {
+                print(ascii"Address of heapArray + {i*8} = {heapArray + i*8}");
+                print(ascii"Value at heapArray[{i}] = {at (heapArray + i*8)}");
+                print(ascii"Value at heapArray[{i}] = {heapArray[i]}");
+        }
+
+        private sint64 value = at valueAddr;
+        print(ascii"Value at valueAddr after dereferencing = {value}");
+}

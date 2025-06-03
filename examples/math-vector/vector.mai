@@ -1,8 +1,10 @@
 #import IO.print
 
-#use Vector3
+#module Vector3
 
-implement none initVector3(integer px, integer py, integer pz)
+#type integer = sint32|uint32;
+
+pack none initVector3(integer px, integer py, integer pz)
 {
         private integer x = px;
         private integer y = py;
@@ -42,17 +44,4 @@ implement none initVector3(integer px, integer py, integer pz)
         {
                 print(ascii"Vector3: {x}, {y}, {z}");
         }
-}
-
-entry sint64 main(none)
-{
-        private instance v = initVector3(1s, 2s, 3s);
-        v.print();
-
-        v.setX(10);
-        v.setY(20);
-        v.setZ(30);
-        v.print();
-
-        return 0s;
 }

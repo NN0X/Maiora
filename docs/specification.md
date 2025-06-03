@@ -146,6 +146,8 @@ entry sint64 main(none)
 
 ```
 
+### utf
+
 ## Keywords
 
 ### entry
@@ -174,7 +176,7 @@ entry sint64 plentifulMain(ascii name, uint16 age, bool isStudent)
 
 ### private
 
-The private keyword is used to define a function or variable that is only accessible within the current file or function. Function declared in `.ora` file cannot be private. All variables are private by default.
+The private keyword is used to define a function or variable that is only accessible within the current file or function.
 
 Example of a private function:
 ```maiora
@@ -225,7 +227,7 @@ entry sint64 main(none)
 ```
 IMPORTANT: Public variables are available from the moment their associated function is called. Their scope is defined by the entry function. It is recommended that public variables are only used in entry function.
 
-IMPORTANT: If public variable is declared in a non-entry function they are overwritten every time the function is called. This means that if you call the function multiple times the variable will be instantiated multiple times, which limits performance as it requires getting rid of the previous instance of the variable.
+IMPORTANT: If public variable is declared in a non-entry function they are overwritten every time the function is called. This means that if you call the function multiple times the variable will be instantiated multiple times.
 
 ```maiora
 private none setPublicMessage(ascii message)
@@ -245,56 +247,67 @@ entry sint64 main(none)
 }
 ```
 
+### pack
+
+The pack keyword is used to define a function that can is a member of a module.
+
+For example IO module is defined as follows:
+```maiora
+#module IO
+
+#type string = ascii|utf;
+
+pack none print(string message)
+{
+    // Implementation of print function
+}
+
+pack none printerr(string message)
+{
+    // Implementation of printerr function
+}
+
+pack bool openFile(string path)
+{
+    // Implementation of openFile function
+
+    return true;
+}
+
+pack entry sint64 initIO(none)
+{
+    // Initialization code for IO module
+    return 0s;
+}
+
+```
+
+### instance
+
+The instance keyword is used to create an instance of a function. This allows assigning a function instance to a variable. When declaring a variable with the instance keyword the variable will NOT take the return value of the function, but rather the function itself. This means that the variable can be used to call the function later.
+
+Example of using instance keyword:
+```maiora
+private none printMessage(ascii message)
+{
+    IO::print(message);
+}
+
+entry sint64 main(none)
+{
+    private instance printHello = printMessage(ascii"Hello, Maiora!"); // this also calls the function
+    private instance printGoodbye = printMessage(ascii"Goodbye, Maiora!"); // this also calls the function
+
+    call printHello; // Calls the function with "Hello, Maiora!"
+    call printGoodbye; // Calls the function with "Goodbye, Maiora!"
+
+    return 0s;
+}
+```
+
 ### strong
 
 The strong keyword is used to define a function that cannot be called with `none` as an argument. This is useful for functions that require specific arguments to operate correctly and should not be called without them.
-
-### declare and implement
-
-The declare keyword is used to declare a function that is implemented in another file. It is used in `.ora` files to declare functions that are implemented in `.mai` files.
-Function declared with `declare` keyword must be implemented within file specified as implementation file in the `.ora` file.
-Function with `declare` is callable from any file that imports the `.ora` file.
-
-```maiora
-// foo.ora
-#use Log
-
-declare none log(none); // Declare function that will be implemented in foo.mai
-```
-
-```maiora
-// foo.mai
-#use Log
-
-implement none log(none)
-{
-    IO::print(ascii"Function foo called.");
-}
-```
-
-This can be accessed by importing the module used in `foo.ora` and `foo.mai` files.
-```maiora
-// main.mai
-#import Log
-
-entry sint64 main(none)
-{
-    Log::log(none);
-    return 0s;
-}
-
-```
-or by importing only log function:
-```maiora
-// main.mai
-#import Log.log
-
-entry sint64 main(none)
-{
-    log(none);
-    return 0s;
-}
-```
 
 ## Key concepts
 
@@ -309,7 +322,7 @@ private none initPerson(ascii name, uint16 age)
     private ascii personName = name;
     private uint16 personAge = age;
 
-    private none printPerson(none)
+    public none printPerson(none)
     {
         IO::print(ascii"Name: {personName}, Age: {personAge}");
     }
@@ -332,22 +345,22 @@ Example of a function that takes another function as an argument:
 private none executeFunctionWithNoReturn(function none f)
 {
     IO::print(ascii"Executing function...");
-    call f;
+    f(none);
     IO::print(ascii"Function executed.");
 }
 
 private none executeFunctionWithReturn(function sint64 f)
 {
     IO::print(ascii"Executing function...");
-    private sint64 var = call f;
+    private sint64 var = f(none);
     IO::print(ascii"Function executed.");
     IO::print(ascii"Return value: {var}");
 }
 
-private none executeFunctionWithArgs(function none f)
+private none executeFunctionWithArgs(function none f, ascii arg1, uint16 arg2)
 {
     IO::print(ascii"Executing function with arguments...");
-    call f;
+    f(arg1, arg2);
     IO::print(ascii"Function executed with arguments.");
 }
 
@@ -368,10 +381,42 @@ entry sint64 main(none)
         IO::print(ascii"Arguments: {arg1}, {arg2}");
     }
 
-    executeFunctionWithNoReturn(printHello(none));
-    executeFunctionWithReturn(returnValue(none));
-    executeFunctionWithArgs(printArgs(ascii"Argument 1", 123u));
+    executeFunctionWithNoReturn(printHello);
+    executeFunctionWithReturn(returnValue);
+    executeFunctionWithArgs(printArgs, ascii"Hello", 123u);
 
     return 0s;
 }
+```
+
+Passing instances of functions as arguments:
+```maiora
+private none executeFunctionWithInstance(instance f)
+{
+    call f; // Calls the function instance
+}
+
+private none printMessage(ascii message)
+{
+    IO::print(message);
+}
+
+entry sint64 main(none)
+{
+    private instance printHello = printMessage(ascii"Hello, Maiora!");
+    private instance printGoodbye = printMessage(ascii"Goodbye, Maiora!");
+
+    executeFunctionWithInstance(printHello); // Calls the function instance with "Hello, Maiora!"
+    executeFunctionWithInstance(printGoodbye); // Calls the function instance with "Goodbye, Maiora!"
+
+    return 0s;
+}
+```
+
+Output of the above code will be:
+```plain
+Hello, Maiora!
+Goodbye, Maiora!
+Hello, Maiora!
+Goodbye, Maiora!
 ```

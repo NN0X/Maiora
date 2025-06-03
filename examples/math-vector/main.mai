@@ -1,0 +1,14 @@
+#import Vector3 as *
+
+entry sint64 main(none)
+{
+        private instance v = initVector3(1s, 2s, 3s);
+        v.print();
+
+        v.setX(10);
+        v.setY(20);
+        v.setZ(30);
+        v.print();
+
+        return 0s;
+}
