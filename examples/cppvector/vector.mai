@@ -13,7 +13,7 @@ pack none vector(uint64 psize)
         {
                 if (size == reserved)
                 {
-                        reserved = reserved * 2;
+                        reserved *= 2;
                         free data;
                         data = heap reserved*[0]; // reallocate with double size
                 }
@@ -42,10 +42,10 @@ pack none vector(uint64 psize)
 
         public none clear()
         {
-                size = 0; // reset size to 0
-                for (uint64 i = 0; i < reserved; i++)
+                size = 0u; // reset size to 0
+                for (uint64 i = 0u; i < reserved; i++)
                 {
-                        data[i] = 0; // clear all elements
+                        data[i] = 0u; // clear all elements
                 }
         }
 }

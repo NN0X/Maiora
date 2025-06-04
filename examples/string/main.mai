@@ -1,0 +1,30 @@
+#import IO.print
+#import Types.string
+#import String as S
+
+// read below function when prompted
+
+private none strMock(ascii[] str)
+{
+}
+
+entry sint64 main(none)
+{
+        print(ascii"Hello, World!\n");
+        // above code prints "Hello, World!" to the console. But how? Isn't ascii type a character type?
+        // "Hello, World!" collapses to -> [ascii'H', ascii'e', ascii'l', ascii'l', ascii'o',..., ascii'\n']
+
+        // To store ascii"stuff" in a variable, we need to use the string higher-level type.
+        // This type is defined in the Types module and is a function.
+
+        private instance str = string("Hello, World!");
+        print(str); // prints Hello, World!
+
+        print(ascii"String length: {str.size}\n"); // prints String length: 13
+
+        print(S::combine(str, ascii" - concatenated with this text.\n")); // prints Hello, World! - concatenated with this text.
+
+        print(S::replace(str, ascii"World", ascii"Universe")); // prints Hello, Universe!
+
+        // now check out the string mock implementation function at the top of the file
+}

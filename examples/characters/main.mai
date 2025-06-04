@@ -1,0 +1,22 @@
+#import IO.print
+
+entry sint64 main(none)
+{
+        address uint64 characters = heap ['H', 'e', 'l', 'l', 'o', ' ', 'W', 'o', 'r', 'l', 'd', '!'];
+        address uint64 charactesCopy = characters;
+        address uint64 lastChar = characters + 10u; // Address of '!'
+        while (lastChar >= characters)
+        {
+                print(ascii(at characters));
+                characters++;
+        }
+        // output of above loop is: Hello World!
+
+        while (lastChar >= charactesCopy)
+        {
+                print(at charactesCopy);
+                charactesCopy++;
+        }
+        // output of above loop is: 72 101 108 108 111 32 87 111 114 108 100 33
+
+}

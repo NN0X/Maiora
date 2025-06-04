@@ -7,13 +7,15 @@ entry sint64 main(none)
 
         print(ascii"Address of valueAddr = {valueAddr}");
         print(ascii"Value at valueAddr = {at valueAddr}");
-        for (uint64 i = 0u; i < 5; i++)
+        for (uint64 i = 0u; i < 5u; i++)
         {
-                print(ascii"Address of heapArray + {i*8} = {heapArray + i*8}");
-                print(ascii"Value at heapArray[{i}] = {at (heapArray + i*8)}");
+                print(ascii"Address of heapArray + {i*8u} = {heapArray + i*8u}");
+                print(ascii"Value at heapArray[{i}] = {at (heapArray + i*8u)}");
                 print(ascii"Value at heapArray[{i}] = {heapArray[i]}");
         }
 
         private sint64 value = at valueAddr;
         print(ascii"Value at valueAddr after dereferencing = {value}");
+
+        return 0s;
 }
