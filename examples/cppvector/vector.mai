@@ -2,7 +2,7 @@
 
 #type integer = sint64|uint64
 
-pack none vector(uint64 psize)
+public none vector(uint64 psize)
 {
         private address integer data = heap psize*[0]; // allocate psize elements with 0 initialization
 
@@ -48,4 +48,9 @@ pack none vector(uint64 psize)
                         data[i] = 0u; // clear all elements
                 }
         }
+}
+
+entry none vector(none)
+{
+        return;
 }

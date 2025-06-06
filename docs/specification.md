@@ -12,9 +12,9 @@ private none foo(none)
     IO::print(ascii"This function takes no arguments and returns no value.");
 }
 
-private none print(ascii message)
+private none print(ascii[] message, uint64 size)
 {
-    IO::print(message);
+    IO::print(message, size);
 }
 
 entry sint64 main(none)
@@ -28,10 +28,17 @@ entry sint64 main(none)
 ```
 
 Above example demonstrates the use of `none` type in function signatures and calls.
-In case of passing `none` as an argument to a function that expects arguments, the function will execute all logic that does not depend on the arguments. This behavior can be prevented by using `strong` keyword or by overloading with `none` as argument.
+In case of passing `none` as an argument to a function that expects arguments, the function will execute all logic that does not depend on the arguments. This behavior can be prevented by using `strong` keyword or by overloading with `none` as argument. It's important to note that when statically compiled, `strong` is always implied.
+
+But then why do the functions have the ability to be called with `none` as an argument?
+This is because Maiora can be run in an interpreter where existence of a variable (for example in a save file) is not guaranteed. In such cases, the function can be called with `none` to execute the logic that does not depend on the arguments.
+
+In the interpreters that are compatible with Maiora Specification, the default behavior for such cases is to engage emergency handler that will add the function to backlog and execute it later when the required arguments are available.
 
 ```maiora
-private none foo1(ascii message)
+#import Types.string;
+
+private none foo1(instance message)
 {
     IO::print(message);
 }
@@ -41,14 +48,14 @@ private none foo1(none)
     IO::print(ascii"Overloaded function with none argument.");
 }
 
-private strong none foo2(ascii message)
+private strong none foo2(instance message)
 {
     IO::print(message);
 }
 
 entry int64 main(none)
 {
-    foo1("Hello, Maiora!"); // Calls the first overload
+    foo1(ascii"Hello, Maiora!"); // Calls the first overload
     foo1(none);             // Calls the second overload
     foo2(none); // Error: strong function cannot be called with none
 
@@ -122,18 +129,17 @@ entry sint64 main(none)
 
 ### ascii
 
-ASCII string type representing a sequence of characters. Used for text manipulation and display.
-Uses ASCII encoding for characters. ascii type before string is used to specify formatting.
+ascii is a character type used for representing characters in the ASCII encoding.
 
 ```maiora
-private none printAscii(ascii message)
+private none printAscii(ascii[] message, uint64 size)
 {
-    IO::print(message);
+    IO::print(message, size);
 }
 
 private ascii sintToAscii(sint64 value)
 {
-    return ascii"{value}";
+    return ascii'{value}'; // Converts sint64 to ascii representation
 }
 
 entry sint64 main(none)
@@ -143,8 +149,12 @@ entry sint64 main(none)
 
     return 0s;
 }
-
 ```
+
+Notice that in above example that sintToAscii returns ascii'{value}' while printAscii is called with ascii"Hello, Maiora!".
+When using single quotes, the value is converted to ascii representation.
+When using double quotes, the value is converted to two variables: array of ascii characters and a size of the array in uint64.
+
 
 ### utf
 
@@ -180,7 +190,7 @@ The private keyword is used to define a function or variable that is only access
 
 Example of a private function:
 ```maiora
-private none printMessage(ascii message)
+private none printMessage(instance message)
 {
     IO::print(message);
 }
@@ -189,24 +199,25 @@ Example of a private variable:
 ```maiora
 private none foo(none)
 {
-    private ascii message = ascii"Hello, Maiora!";
+    private instance message = Types::string("Hello, Maiora!");
 }
 
 entry sint64 main(none)
 {
+    private instance fooInstance = foo(none); // creates an instance of the function foo
     foo(none);
-    IO::print(message); // Error: message is private and cannot be accessed here
+    IO::print(fooInstance.message); // Error: message is private and cannot be accessed here
     return 0s;
 }
 ```
 
 ### public
 
-The public keyword is used to define a function or variable that is accessible from other files or functions. Functions implemented with `public` keyword do not have to be declared in `.ora` file.
+The public keyword is used to define a function or variable that is accessible from other files or functions.
 
 Example of a public function:
 ```maiora
-public none printPublicMessage(ascii message)
+public none printPublicMessage(instance message)
 {
     IO::print(message);
 }
@@ -215,80 +226,42 @@ Example of a public variable:
 ```maiora
 private none foo(none)
 {
-    public ascii publicMessage = ascii"Hello, Maiora!";
+    public instance publicMessage = Types::string(ascii"Hello, Maiora!");
 }
 
 entry sint64 main(none)
 {
+    private instance fooInstance = foo(none); // creates an instance of the function foo
     foo(none);
-    IO::print(publicMessage); // Accessing public variable
+    IO::print(fooInstance.publicMessage); // Accessing public variable
     return 0s;
 }
 ```
-IMPORTANT: Public variables are available from the moment their associated function is called. Their scope is defined by the entry function. It is recommended that public variables are only used in entry function.
+IMPORTANT: Public variables are available from the instances of corresponding functions. Their scope is defined by the scope of the instance variable.
 
-IMPORTANT: If public variable is declared in a non-entry function they are overwritten every time the function is called. This means that if you call the function multiple times the variable will be instantiated multiple times.
+IMPORTANT: There is no such thing as a global variable in Maiora. The most "global" scope is the scope of the entry function.
 
 ```maiora
-private none setPublicMessage(ascii message)
-{
-    public ascii publicMessage = message; // This will be overwritten every time the function is called
-}
+
+public sint64 globalVariable = 42s;
 
 entry sint64 main(none)
 {
-    setPublicMessage(ascii"Hello, Maiora!"); // First call
-    IO::print(publicMessage); // Output: Hello, Maiora!
-
-    setPublicMessage(ascii"Goodbye, Maiora!"); // Second call
-    IO::print(publicMessage); // Output: Goodbye, Maiora!
-
+    IO::print(ascii"Global variable: {globalVariable}"); // Accessing public variable
     return 0s;
 }
 ```
 
-### pack
+Above code will not compile, because globalVariable is not attached to any function instance.
 
-The pack keyword is used to define a function that can is a member of a module.
-
-For example IO module is defined as follows:
-```maiora
-#module IO
-
-#type string = ascii|utf;
-
-pack none print(string message)
-{
-    // Implementation of print function
-}
-
-pack none printerr(string message)
-{
-    // Implementation of printerr function
-}
-
-pack bool openFile(string path)
-{
-    // Implementation of openFile function
-
-    return true;
-}
-
-pack entry sint64 initIO(none)
-{
-    // Initialization code for IO module
-    return 0s;
-}
-
-```
 
 ### instance
 
-The instance keyword is used to create an instance of a function. This allows assigning a function instance to a variable. When declaring a variable with the instance keyword the variable will NOT take the return value of the function, but rather the function itself. This means that the variable can be used to call the function later.
+The instance keyword is used to create an instance of a function. This allows assigning a function instance to a variable. When declaring a variable with the instance keyword the variable will NOT take the return value of the function, but rather the function itself. This means that the variable can be used to use the function as a data object like a C structure or C++ class.
 
 Example of using instance keyword:
 ```maiora
-private none printMessage(ascii message)
+private none printMessage(instance message)
 {
     IO::print(message);
 }
@@ -298,12 +271,40 @@ entry sint64 main(none)
     private instance printHello = printMessage(ascii"Hello, Maiora!"); // this also calls the function
     private instance printGoodbye = printMessage(ascii"Goodbye, Maiora!"); // this also calls the function
 
-    call printHello; // Calls the function with "Hello, Maiora!"
-    call printGoodbye; // Calls the function with "Goodbye, Maiora!"
+    return 0s;
+}
+```
+
+Above example demonstrates how to create instances of functions and call them later, but also shows a problem with this implementation of printMessage function as it probably should not print anything when called with instance keyword. Below example shows the proper way to use instance keyword with functions that are not supposed to be called immediately.
+
+```maiora
+private none printMessage(instance pmessage)
+{
+    private instance message = pmessage;
+
+    public none call(none)
+    {
+        IO::print(message);
+    }
+}
+
+entry sint64 main(none)
+{
+    private instance printHello = printMessage(ascii"Hello, Maiora!"); // creates an instance of the function
+    private instance printGoodbye = printMessage(ascii"Goodbye, Maiora!"); // creates an instance of the function
+
+    printHello.call(none); // Calls the function instance
+    printGoodbye.call(none); // Calls the function instance
 
     return 0s;
 }
 ```
+
+As you can see in the above example, the `printMessage` function creates an instance variable `message` that holds the message to be printed. The `call` function is then used to print the message when needed.
+
+You can also see that ascii"Hello, Maiora!" is passed as an instance. But why is that?
+The string type defined in Maiora is actually a function `public none string(ascii[] pstr, uint64 size)` that is implemented in the module `Types`.
+
 
 ### strong
 
@@ -376,14 +377,14 @@ entry sint64 main(none)
         return 42s;
     }
 
-    private none printArgs(ascii arg1, uint16 arg2)
+    private none printArgs(instance arg1, uint16 arg2)
     {
         IO::print(ascii"Arguments: {arg1}, {arg2}");
     }
 
     executeFunctionWithNoReturn(printHello);
     executeFunctionWithReturn(returnValue);
-    executeFunctionWithArgs(printArgs, ascii"Hello", 123u);
+    executeFunctionWithArgs(printArgs, string(ascii"Hello"), 123u);
 
     return 0s;
 }
@@ -396,7 +397,7 @@ private none executeFunctionWithInstance(instance f)
     call f; // Calls the function instance
 }
 
-private none printMessage(ascii message)
+private none printMessage(instance message)
 {
     IO::print(message);
 }
