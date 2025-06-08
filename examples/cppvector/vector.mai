@@ -51,7 +51,7 @@ public none vector(uint64 psize)
         }
 }
 
-entry none vector(none)
+entry none init(none)
 {
         return;
 }

@@ -4,7 +4,7 @@
 
 #type integer = sint32|uint32;
 
-pack none initVector3(integer px, integer py, integer pz)
+public none initVector3(integer px, integer py, integer pz)
 {
         private integer x = px;
         private integer y = py;
@@ -44,4 +44,9 @@ pack none initVector3(integer px, integer py, integer pz)
         {
                 print(ascii"Vector3: {x}, {y}, {z}");
         }
+}
+
+entry none init(none)
+{
+        return;
 }
