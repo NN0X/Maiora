@@ -1,6 +1,7 @@
 #import IO
+#import Types.string
 
-private uint64 openFile(ascii path)
+private uint64 openFile(instance path)
 {
         private instance file = IO::openFile(path);
         bool isOpen = file.return;
@@ -17,7 +18,7 @@ private uint64 openFile(ascii path)
 
 entry sint64 main(none)
 {
-        private ascii path = "example.txt";
+        private instance path = string(ascii"example.txt");
         private uint64 size = openFile(path);
 
         if (size > 0)
