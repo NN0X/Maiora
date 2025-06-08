@@ -6,7 +6,7 @@ public none vector(uint64 psize)
 {
         private address integer data = heap psize*[0]; // allocate psize elements with 0 initialization
 
-        public uint64 reserved = size;
+        public uint64 reserved = psize;
         public uint64 size = 0;
 
         public none push(integer value)
@@ -14,8 +14,13 @@ public none vector(uint64 psize)
                 if (size == reserved)
                 {
                         reserved *= 2;
-                        free data;
+                        private address uint64 temp = data;
                         data = heap reserved*[0]; // reallocate with double size
+                        for (uint64 i = 0; i < size; i++)
+                        {
+                                data[i] = temp[i];
+                        }
+                        free temp; // free the old memory
                 }
                 data[size] = value; // store the value at the current size index
                 size++;
@@ -43,10 +48,6 @@ public none vector(uint64 psize)
         public none clear()
         {
                 size = 0u; // reset size to 0
-                for (uint64 i = 0u; i < reserved; i++)
-                {
-                        data[i] = 0u; // clear all elements
-                }
         }
 }
 
