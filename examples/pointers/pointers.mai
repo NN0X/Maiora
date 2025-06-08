@@ -2,7 +2,7 @@
 
 entry sint64 main(none)
 {
-        address sint64 valueAddr = heap 64s;
+        address sint64 valueAddr = heap 52s;
         address uint64 heapArray = heap [64s, 54s, 44s, 34s, 24s];
 
         print(ascii"Address of valueAddr = {valueAddr}");
