@@ -187,6 +187,7 @@ entry sint64 plentifulMain(ascii name, uint16 age, bool isStudent)
 ### private
 
 The private keyword is used to define a function or variable that is only accessible within the current file or function.
+Variables are private by default, but can be explicitly marked as private for clarity. Functions must be explicitly marked as private.
 
 Example of a private function:
 ```maiora
@@ -214,6 +215,7 @@ entry sint64 main(none)
 ### public
 
 The public keyword is used to define a function or variable that is accessible from other files or functions.
+Functions are public by default, but can be explicitly marked as public for clarity. Variables must be explicitly marked as public to be accessible outside of their scope.
 
 Example of a public function:
 ```maiora
@@ -305,6 +307,28 @@ As you can see in the above example, the `printMessage` function creates an inst
 You can also see that ascii"Hello, Maiora!" is passed as an instance. But why is that?
 The string type defined in Maiora is actually a function `public none string(ascii[] pstr, uint64 size)` that is implemented in the module `Types`.
 
+There is a cleaner way to ineract with Types instances (in actuality, all instances in Maiora) as shown below.
+```maiora
+
+private none string(ascii[] pstr, uint64 size)
+{
+    private instance str = pstr;
+    private uint64 strSize = size;
+
+    public none print(none)
+    {
+        IO::print(str, strSize);
+    }
+}
+
+entry sint64 main(none)
+{
+    private string hello = ascii"Hello, Maiora!"; // Creates an instance of the string function
+    // line below is equivalent to the line above
+    // private instance hello = string(ascii"Hello, Maiora!");
+    // REMINDER: ascii"Hello, Maiora!" colapses to ascii[] and uint64 size automatically
+}
+```
 
 ### strong
 
@@ -421,3 +445,8 @@ Goodbye, Maiora!
 Hello, Maiora!
 Goodbye, Maiora!
 ```
+
+Why pass functions with instance keyword and not function keyword?
+When passing instance as arguments it conveys another information that can be used before calling the function.
+So in conclusion, when passing a function only to call it the better way is to use function keyword.
+When passing a function to be used as a data object, the better way is to use instance keyword.

@@ -21,7 +21,6 @@ syntax match maioraCharacter "'[^']\{0,1}'" containedin=ALLBUT,maioraString,maio
 syntax match maioraNumber "\<-\=\d\+\(s\|u\)\>" containedin=ALLBUT,maioraString,maioraComment,maioraCharacter
 
 syntax match maioraSemicolon ";" containedin=ALLBUT,maioraComment,maioraString,maioraCharacter
-syntax match maioraColon ":\s*" containedin=ALLBUT,maioraComment,maioraString,maioraCharacter
 
 highlight link maioraKeyword Identifier
 highlight link maioraControl Identifier
@@ -38,4 +37,3 @@ highlight link maioraCharacter Character
 highlight link maioraNumber Number
 highlight link maioraComment Comment
 highlight link maioraSemicolon PreProc
-highlight link maioraColon Statement

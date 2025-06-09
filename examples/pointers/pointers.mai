@@ -18,7 +18,7 @@ entry sint64 main(none)
         print(ascii"Value at valueAddr after dereferencing = {value}");
 
         free valueAddr; // free memory under valueAddr `free valueAddr` collapeses to free `valueAddr:1`;
-        free heapArray:5; // free memory under heapArray and the 4 additional elements
+        free heapArray; // free works like free(pointer) in C
 
         return 0s;
 }
