@@ -1,0 +1,8 @@
+#import IO.print
+
+entry sint64 main(none)
+{
+        print([ascii'H', ascii'e', ascii'l', ascii'l', ascii'o', ascii',', ascii' ', ascii'w', ascii'o', ascii'r', ascii'l', ascii'd', ascii'!', ascii'\n'], 14u);
+
+        return 0s;
+}
