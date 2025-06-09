@@ -1,73 +1,41 @@
 syntax clear
 
-" -----------------------
-" Keywords & Control Flow
-" -----------------------
-syntax keyword maioraKeyword public private entry pack instance as function address at heap
-syntax keyword maioraControl if else while for return
-
-" -----------------------
-" Type Definitions (add more here)
-" -----------------------
-syntax keyword maioraType sint64 sint32 sint16 sint8 uint64 uint32 uint16 uint8 bool none ascii
-
-" -----------------------
-" Preprocessor Statements
-" -----------------------
-syntax match maioraImport "^#import\s\+\S\+"
-syntax match maioraModulePre "^#module\s\+\S\+"
-syntax match maioraTypePre "^#type\s\+\S\+"
-
-" -----------------------
-" Function Definitions
-" Highlights only the function name in definitions like: int64 myFunc(...)
-" -----------------------
-syntax match maioraFunctionDef "\(int64\|uint64\|bool\|none\|ascii\)\s\+\zs\w\+\ze\s*("
-
-" -----------------------
-" Function Calls (e.g., print(...) or myFunc(...), excluding control keywords)
-" -----------------------
-syntax match maioraFunctionCall "\<\w\+\ze\s*(" containedin=ALLBUT,maioraFunctionDef,maioraControl
-
-" -----------------------
-" Module Access (e.g., IO::print)
-" Highlights `IO` as a module
-" -----------------------
-syntax match maioraModule "\<\w\+\ze::"
-
-" -----------------------
-" String Literals ("Hello")
-" -----------------------
-syntax region maioraString start=+"+ skip=+\\"+ end=+"+ keepend
-
-" -----------------------
-" Number Literals: signed/unsigned like -12s, 0u
-" -----------------------
-syntax match maioraNumber "\<-\=\d\+\(s\|u\)\>"
-
-" -----------------------
-" Comments
-" -----------------------
 syntax match maioraComment "//.*$"
+syntax region maioraString start=+"+ skip=+\\"+ end=+"+ keepend containedin=ALLBUT,maioraComment
 
-" -----------------------
-" Semicolons
-" -----------------------
-syntax match maioraSemicolon ";"
+syntax keyword maioraKeyword public private entry instance as function containedin=ALLBUT,maioraComment,maioraString
+syntax keyword maioraControl if else while for return containedin=ALLBUT,maioraComment,maioraString
 
-" -----------------------
-" Highlight Links
-" -----------------------
-highlight link maioraKeyword Keyword
+syntax keyword maioraMemory heap address free at containedin=ALLBUT,maioraComment,maioraString
+syntax keyword maioraType sint64 sint32 sint16 sint8 uint64 uint32 uint16 uint8 bool none ascii containedin=ALLBUT,maioraComment,maioraString
+
+syntax match maioraImport "^#import\s\+\S\+" containedin=ALLBUT,maioraComment,maioraString
+syntax match maioraModulePre "^#module\s\+\S\+" containedin=ALLBUT,maioraComment,maioraString
+syntax match maioraTypePre "^#type\s\+\S\+" containedin=ALLBUT,maioraComment,maioraString
+syntax match maioraModule "\<\w\+\ze::" containedin=ALLBUT,maioraComment,maioraString
+
+syntax match maioraFunctionDef "\(int64\|uint64\|bool\|none\|ascii\)\s\+\zs\w\+\ze\s*(" containedin=ALLBUT,maioraComment,maioraString
+syntax match maioraFunctionCall "\<\w\+\ze\s*(" containedin=ALLBUT,maioraFunctionDef,maioraControl,maioraComment,maioraString
+
+syntax match maioraCharacter "'[^']\{0,1}'" containedin=ALLBUT,maioraString,maioraComment
+syntax match maioraNumber "\<-\=\d\+\(s\|u\)\>" containedin=ALLBUT,maioraString,maioraComment,maioraCharacter
+
+syntax match maioraSemicolon ";" containedin=ALLBUT,maioraComment,maioraString,maioraCharacter
+syntax match maioraColon ":\s*" containedin=ALLBUT,maioraComment,maioraString,maioraCharacter
+
+highlight link maioraKeyword Identifier
 highlight link maioraControl Identifier
+highlight link maioraMemory Keyword
 highlight link maioraType Type
 highlight link maioraImport PreProc
 highlight link maioraModulePre PreProc
-highlight link maioraTypePre PreProc
+highlight link maioraTypePre Function
 highlight link maioraFunctionDef Function
 highlight link maioraFunctionCall Function
 highlight link maioraModule Structure
 highlight link maioraString String
+highlight link maioraCharacter Character
 highlight link maioraNumber Number
 highlight link maioraComment Comment
-highlight link maioraSemicolon Statement
+highlight link maioraSemicolon PreProc
+highlight link maioraColon Statement

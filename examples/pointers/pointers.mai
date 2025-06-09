@@ -2,8 +2,8 @@
 
 entry sint64 main(none)
 {
-        address sint64 valueAddr = heap 52s;
-        address uint64 heapArray = heap [64s, 54s, 44s, 34s, 24s];
+        private address sint64 valueAddr = heap 52s;
+        private address uint64 heapArray = heap [64s, 54s, 44s, 34s, 24s];
 
         print(ascii"Address of valueAddr = {valueAddr}");
         print(ascii"Value at valueAddr = {at valueAddr}");
@@ -16,6 +16,9 @@ entry sint64 main(none)
 
         private sint64 value = at valueAddr;
         print(ascii"Value at valueAddr after dereferencing = {value}");
+
+        free valueAddr; // free memory under valueAddr `free valueAddr` collapeses to free `valueAddr:1`;
+        free heapArray:5; // free memory under heapArray and the 4 additional elements
 
         return 0s;
 }

@@ -3,7 +3,7 @@
 
 entry sint64 main(none)
 {
-        private instance vec = vector(4u); // create a vector with initial size 4
+        private instance vec = vector(4u); // create a vector with initial size 4 initialized to zero
         vec.push(10u);
         vec.push(20u);
         vec.push(30u);
@@ -19,10 +19,10 @@ entry sint64 main(none)
 
         print(ascii"Vector size after additions = {vec.size}");
         print(ascii"Vector reserved size after additions = {vec.reserved}");
-        vec.pop(); // remove the last element
+        vec.pop();
         print(ascii"Vector size after pop = {vec.size}");
 
-        vec.clear(); // clear the vector
+        vec.clear();
         print(ascii"Vector size after clear = {vec.size}");
 
         for (uint64 i = 0u; i < vec.reserved; i++)
