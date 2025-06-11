@@ -1,0 +1,11 @@
+#module Types
+
+public none string(ascii[] pdata, uint64 psize)
+{
+        public uint64 size = psize;
+        private address ascii data = heap pdata;
+
+        public none print()
+        {
+        }
+}

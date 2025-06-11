@@ -1,1 +1,5 @@
 #module Types
+
+entry none types(none)
+{
+}
