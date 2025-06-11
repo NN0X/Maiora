@@ -1,0 +1,11 @@
+#module IO
+
+public none write(uint64 fd, ascii[] data, uint64 size)
+{
+        // TODO: implement write to be system call
+}
+
+public none write(uint64 fd, uint8[] data, uint64 size)
+{
+        // TODO: implement write to be system call
+}

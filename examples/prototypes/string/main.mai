@@ -9,6 +9,8 @@ private none strMock(ascii[] pstr, uint64 psize)
         private address str = heap pstr;
         public sint64 size = psize;
 
+        // NOTE: real string print method uses IO::write(IO::stdout, str, size);
+        // IO::write collapses during compilation into architecture-specific write syscall
         public none print()
         {
                 for (uint64 i = 0u; i < size; i++)
@@ -18,7 +20,7 @@ private none strMock(ascii[] pstr, uint64 psize)
         }
 }
 
-// below function is a simplified implementation of IO::print overloaded with instance type
+// below function is a simplified implementation of IO::print overloaded with instance type string
 private none printExample(instance object)
 {
         object.print();
