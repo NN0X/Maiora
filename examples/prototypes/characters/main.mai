@@ -18,4 +18,6 @@ entry sint64 main(none)
                 charactesCopy++;
         }
         // output of above loop is: 72 101 108 108 111 32 87 111 114 108 100 33
+
+        free characters;
 }
