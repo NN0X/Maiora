@@ -55,7 +55,6 @@ entry sint64 main(none)
         print(ascii"Value at valueAddr after dereferencing = {value}");
 
         // INFO: freeing the heap memory in entry is not needed as going out of scope will automatically free it
-        // INFO: however it is a good practice to free the heap memory when it is no longer needed
 
         private instance foo = compilable();
         print(ascii"Address of fooVar = {foo.fooVar}");

@@ -3,10 +3,11 @@ syntax clear
 syntax match maioraComment "//.*$"
 syntax region maioraString start=+"+ skip=+\\"+ end=+"+ keepend containedin=ALLBUT,maioraComment
 
-syntax keyword maioraKeyword public private entry instance as function containedin=ALLBUT,maioraComment,maioraString
+syntax keyword maioraKeyword public private entry as containedin=ALLBUT,maioraComment,maioraString
 syntax keyword maioraControl if else while for return containedin=ALLBUT,maioraComment,maioraString
 
-syntax keyword maioraMemory heap address free at containedin=ALLBUT,maioraComment,maioraString
+syntax keyword maioraFunction instance function containedin=ALLBUT,maioraComment,maioraString
+syntax keyword maioraMemory heap address reference ref at containedin=ALLBUT,maioraComment,maioraString
 syntax keyword maioraType sint64 sint32 sint16 sint8 uint64 uint32 uint16 uint8 bool none ascii containedin=ALLBUT,maioraComment,maioraString
 
 syntax match maioraImport "^#import\s\+\S\+" containedin=ALLBUT,maioraComment,maioraString
@@ -24,6 +25,7 @@ syntax match maioraSemicolon ";" containedin=ALLBUT,maioraComment,maioraString,m
 
 highlight link maioraKeyword Identifier
 highlight link maioraControl Identifier
+highlight link maioraFunction Keyword
 highlight link maioraMemory Keyword
 highlight link maioraType Type
 highlight link maioraImport PreProc
