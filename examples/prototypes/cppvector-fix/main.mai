@@ -1,5 +1,5 @@
 #import IO.print
-#import vector as *
+#import vector as * // this imports the whole vector module without the need to prefix module functions with vector::
 
 entry sint64 main(none)
 {

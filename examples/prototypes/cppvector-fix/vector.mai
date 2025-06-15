@@ -1,6 +1,6 @@
 #module vector
 
-#type integer = sint64|uint64
+#type integer = <sint64|uint64>
 
 public none vector(uint64 psize)
 {

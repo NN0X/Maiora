@@ -1,16 +1,18 @@
 #module IO
 
+#type char = <ascii|utf8|utf16|utf32>
+
 public none print(instance data)
 {
         data.print();
 }
 
-public none print(ascii[] data, uint64 size)
+public none print(char[] data, usize size)
 {
         write(1u, data, size); // 1 is the file descriptor for stdout
 }
 
-public none printerr(ascii[] data, uint64 size)
+public none printerr(char[] data, usize size)
 {
         write(2u, data, size); // 2 is the file descriptor for stderr
 }

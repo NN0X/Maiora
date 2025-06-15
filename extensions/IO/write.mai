@@ -1,11 +1,13 @@
 #module IO
 
-public none write(uint64 fd, ascii[] data, uint64 size)
+#type char = <ascii|utf8|utf16|utf32>
+
+public none write(sint32 fd, char[] data, usize size)
 {
         // TODO: implement write to be system call
 }
 
-public none write(uint64 fd, uint8[] data, uint64 size)
+public none write(sint32 fd, uint8[] data, usize size)
 {
         // TODO: implement write to be system call
 }

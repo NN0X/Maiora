@@ -1,6 +1,5 @@
 #import IO.print
 
-
 // below function will not compile because it tries to return a value of type address
 public uint64 notCompilable(none)
 {
@@ -55,7 +54,8 @@ entry sint64 main(none)
         private sint64 value = at valueAddr;
         print(ascii"Value at valueAddr after dereferencing = {value}");
 
-        // INFO: freeing the heap memory is not needed as going out of scope will automatically free it
+        // INFO: freeing the heap memory in entry is not needed as going out of scope will automatically free it
+        // INFO: however it is a good practice to free the heap memory when it is no longer needed
 
         private instance foo = compilable();
         print(ascii"Address of fooVar = {foo.fooVar}");

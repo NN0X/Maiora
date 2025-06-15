@@ -9,13 +9,12 @@ private none strMock(ascii[] pstr, uint64 psize)
         private address str = heap pstr;
         public sint64 size = psize;
 
-        // NOTE: real string print method uses IO::write(IO::stdout, str, size);
-        // IO::write collapses during compilation into architecture-specific write syscall
+        // NOTE: real string print method uses IO::write; which is an abstraction over the write syscall
         public none print()
         {
                 for (uint64 i = 0u; i < size; i++)
                 {
-                        print(ascii'{at (str + i)}');
+                        print(ascii'{at (str[i])}');
                 }
         }
 }
@@ -41,9 +40,9 @@ entry sint64 main(none)
 
         print(ascii"String length: {str.size}\n"); // prints String length: 13
 
-        print(S::combine(str, ascii" - concatenated with this text.\n")); // prints Hello, World! - concatenated with this text.
+        print(S::combine(str, ascii" - concatenated with this text.\n")); // prints: Hello, World! - concatenated with this text.
 
-        print(S::replace(str, ascii"World", ascii"Universe")); // prints Hello, Universe!
+        print(S::replace(str, ascii"World", ascii"Universe")); // prints: Hello, Universe!
 
         // now check out the functions implemented at the top of the file
 }

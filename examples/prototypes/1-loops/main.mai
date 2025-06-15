@@ -1,0 +1,6 @@
+#import IO.print
+
+entry sint32 main(none)
+{
+        return 0s;
+}
