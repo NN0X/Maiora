@@ -1,0 +1,55 @@
+#import IO.print
+
+entry sint32 main(none)
+{
+        sint64 a = 5s;
+        bool b = true;
+        sint64 c = 10s;
+
+        if (b)
+        {
+                print("b is true\n");
+        }
+        else
+        {
+                print("b is false\n");
+        }
+
+        if (a < c)
+        {
+                print("a is less than c\n");
+        }
+        else if (a > c)
+        {
+                print("a is greater than c\n");
+        }
+        else
+        {
+                print("a is equal to c\n");
+        }
+
+        if (a == 5s)
+        {
+                print("a is equal to 5\n");
+        }
+        else
+        {
+                print("a is not equal to 5\n");
+        }
+
+        switch (a)
+        {
+                case 5s:
+                        print("a is 5\n");
+                case 10s:
+                        print("a is 10\n");
+                default:
+                        print("a is neither 5 nor 10\n");
+        }
+
+        print("{if (a < c) "a is less than c"} else {"a is greater than or equal to c"}\n");
+
+        bool ternaryEquivalent = if (a < c) {true} else {false};
+
+        return 0s;
+}
