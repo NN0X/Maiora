@@ -1,0 +1,74 @@
+#import IO.print
+
+// below function will not compile because it tries to return a value of type address
+public uint64 notCompilable(none)
+{
+        private address sint64 fooVar = heap 42s;
+
+        return fooVar;
+}
+
+// below function will compile
+// INFO: as address is immutable when creating an instance of a function . operator will only allow read access
+// NOTE: when an instance of a function is created the scope of the function gets extended to the lifetime of the instance
+public none compilable(none)
+{
+        public address sint64 fooVar = heap 42s;
+}
+
+public none compilable2(reference sint64 ref)
+{
+        print(ascii"Value at ref = {at ref}"); // INFO: this will print the value at the address of ref
+        print(ascii"Address of ref = {ref}"); // INFO: this will print the address of ref
+
+        private reference sint64 ref2 = ref; // INFO: this is allowed as it is a reference to the address
+        public reference sint64 pubRef = ref; // INFO: this is allowed as it is a reference to the address
+}
+
+public sint64 notCompilable2(none)
+{
+        public address sint64 fooVar = heap 42s;
+        private reference sint64 fooVarRef = ref fooVar; // INFO: this is allowed as it is a reference to the address
+
+        return fooVarRef; // INFO: this will not compile because returning a reference is not allowed
+}
+
+entry sint64 main(none)
+{
+        private address sint64 valueAddr = heap 52s;
+        private address sint64 heapArray = heap [64s, 54s, 44s, 34s, 24s];
+
+        // INFO: address variable is implicitly immutable
+
+        print(ascii"Address of valueAddr = {valueAddr}");
+        print(ascii"Value at valueAddr = {at valueAddr}");
+        for (uint64 i = 0u; i < 5u; i++)
+        {
+                // print(ascii"Address of heapArray + {i*8u} = {heapArray + i*8u}"); this would not work because pointer arithmetic is forbidden
+                // print(ascii"Value at heapArray[{i}] = {at (heapArray + i*8u)}"); this would not work as well
+                print(ascii"Value at heapArray[{i}] = {heapArray[i]}");
+        }
+
+        print(at valueAddr[5u]); // INFO: trying to dereference an address that is out of bounds will cause a panic
+
+        private sint64 value = at valueAddr;
+        print(ascii"Value at valueAddr after dereferencing = {value}");
+
+        // INFO: freeing the heap memory in entry is not needed as going out of scope will automatically free it
+
+        private instance foo = compilable();
+        print(ascii"Address of fooVar = {foo.fooVar}");
+        print(ascii"Value at fooVar = {at foo.fooVar}");
+
+        private address sint64 fooVar = foo.fooVar; // INFO: this in not allowed
+        private reference sint64 fooVarRef = foo.fooVar; // INFO: this is allowed as it is a reference to the address
+
+        // references are mutable but can only be used to read the value at the address
+
+        private instance foo2 = compilable2(fooVarRef);
+        foo2.pubRef = heap 100s; // INFO: this is not allowed because pubRef is not an address
+        private address sint64 pubRefAddr = heap 100s;
+        foo2.pubRef = ref pubRefAddr; // INFO: this is allowed as pubRef is a reference to the address
+
+        return 0s;
+}

@@ -1,0 +1,69 @@
+#import IO.put
+#import Types.string // string is a function
+
+private none stringMock(ascii[] pdata, uint64 psize)
+{
+        private address ascii pdata = heap pdata;
+        public uint64 size = psize;
+
+        public none print()
+        {
+                for (uint64 i = 0; i < psize; i++)
+                {
+                        put(pdata[i]);
+                }
+        }
+}
+
+private float32 foo(sint64 a, sint64 b)
+{
+        if (b == 0)
+        {
+                return 0f;
+        }
+        public float32 float = a / b;
+        return float;
+}
+
+private none printMock(stringMock str)
+{
+        str.print();
+}
+
+private none printMockStr(stringMock str)
+{
+        printMock(str);
+}
+
+private none printMock(foo f)
+{
+        put(f.return);
+        // put(f.float); would work the same
+}
+
+private none printMockInstance(instance str)
+{
+        str.print();
+}
+
+entry sint64 main(none)
+{
+        private instance str1 = stringMock(ascii"test");
+        private stringMock str2 = ascii"test";
+
+        private instance foo1 = foo(50s, 30s);
+        private foo foo2 = (50s, 30s);
+
+        printMock(str1);
+        printMock(str2);
+        printMockInstance(str1);
+        printMockInstance(str2);
+
+        printMock(foo1);
+        printMock(foo2);
+
+        // printMockInstance(foo1); <- will not work because foo doesn't have print
+        // printMockInstance(foo2); <- same as above
+        // printMockStr(foo1); <- will not work because foo1 is not an instance of stringMock function
+        // printMockStr(foo2); <- same as above
+}

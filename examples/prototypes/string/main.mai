@@ -1,0 +1,48 @@
+#import IO.print
+#import Types.string
+#import String as S
+
+// read below function when prompted, start at main
+
+private none strMock(ascii[] pstr, uint64 psize)
+{
+        private address str = heap pstr;
+        public sint64 size = psize;
+
+        // NOTE: real string print method uses IO::write; which is an abstraction over the write syscall
+        public none print()
+        {
+                for (uint64 i = 0u; i < size; i++)
+                {
+                        print(ascii'{at (str[i])}');
+                }
+        }
+}
+
+// below function is a simplified implementation of IO::print overloaded with instance type string
+private none printExample(instance object)
+{
+        object.print();
+}
+
+entry sint64 main(none)
+{
+        print(ascii"Hello, World!\n");
+        // above code prints "Hello, World!" to the console. But how? Isn't ascii type a character type?
+        // "Hello, World!" collapses to -> [ascii'H', ascii'e', ascii'l', ascii'l', ascii'o',..., ascii'\n'], size (uint64)
+
+        // To store ascii"stuff" in a variable, we can use the string higher-level type.
+        // This type is defined in the Types module and is a function.
+
+        private instance str = string("Hello, World!");
+        print(str); // prints Hello, World!
+        str.print(); // prints Hello, World! (using the print method of the string type)
+
+        print(ascii"String length: {str.size}\n"); // prints String length: 13
+
+        print(S::combine(str, ascii" - concatenated with this text.\n")); // prints: Hello, World! - concatenated with this text.
+
+        print(S::replace(str, ascii"World", ascii"Universe")); // prints: Hello, Universe!
+
+        // now check out the functions implemented at the top of the file
+}

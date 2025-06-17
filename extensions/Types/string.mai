@@ -1,0 +1,13 @@
+#module Types
+
+#type char = ascii|utf8|utf16|utf32;
+
+public none string(char[] pdata, usize psize)
+{
+        public usize size = psize;
+        private address char data = heap pdata;
+
+        public none print()
+        {
+        }
+}

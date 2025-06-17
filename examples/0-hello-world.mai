@@ -1,0 +1,7 @@
+#import IO.print
+
+entry sint32 main(sint32 argc, ascii[] argv)
+{
+        print(ascii"Hello, World!\n");
+        return 0s;
+}

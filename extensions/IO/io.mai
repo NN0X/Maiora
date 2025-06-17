@@ -1,0 +1,6 @@
+#module IO
+
+entry none io(none)
+{
+        // TODO: initialize stdout, stdin, stderr etc
+}

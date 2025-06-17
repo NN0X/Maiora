@@ -1,0 +1,30 @@
+#module Types
+
+#type datatype = <sint64|uint64|float64|ascii|instance>
+
+public none darray(usize psize, datatypes pinitial)
+{
+        public usize size = psize;
+        private address datatype data = heap size*[initial];
+        private datatypes initial = initial;
+
+        public none push(datatype value)
+        {
+        }
+
+        public datatype pop()
+        {
+        }
+
+        public datatype get(usize index)
+        {
+        }
+
+        public none set(usize index, datatype value)
+        {
+        }
+
+        public none clear()
+        {
+        }
+}

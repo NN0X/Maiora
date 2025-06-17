@@ -1,0 +1,55 @@
+#import IO.print
+
+entry sint32 main(none)
+{
+        address ascii message = heap [ascii'H', ascii'e', ascii'l', ascii'l', ascii'o'];
+
+        for (reference ascii char : ref message)
+        {
+                print(ascii"character at {for.i} = {at char}\n");
+        }
+
+        for (usize i = 0u; i < 5u; i++)
+        {
+                print(ascii"character at {i} = {message[i]}\n");
+        }
+
+        while (true)
+        {
+                print(ascii"while loop iteration {while.i}, character = {message[while.i]}\n");
+                if (while.i >= 5u)
+                {
+                        break;
+                }
+        }
+
+        sint32 i = 0;
+        for (i; i < 5s; i++)
+        {
+                print(ascii"for loop iteration {i}\n");
+        }
+        else if (i == 5s)
+        {
+                print(ascii"for loop completed with i = {i}\n");
+        }
+        else
+        {
+                print(ascii"for loop exited with i = {i}\n");
+        }
+
+        while (i < 10s)
+        {
+                print(ascii"while loop iteration {i}\n");
+                i++;
+        }
+        else if (i == 10s)
+        {
+                print(ascii"while loop completed with i = {i}\n");
+        }
+        else
+        {
+                print(ascii"while loop exited with i = {i}\n");
+        }
+
+        return 0s;
+}

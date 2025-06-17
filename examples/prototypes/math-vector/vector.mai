@@ -1,0 +1,52 @@
+#import IO.print
+
+#module Vector3
+
+#type integer = <sint32|uint32>;
+
+public none initVector3(integer px, integer py, integer pz)
+{
+        private integer x = px;
+        private integer y = py;
+        private integer z = pz;
+
+        public integer getX()
+        {
+                return x;
+        }
+
+        public integer getY()
+        {
+                return y;
+        }
+
+        public integer getZ()
+        {
+                return z;
+        }
+
+        public none setX(integer newX)
+        {
+                x = newX;
+        }
+
+        public none setY(integer newY)
+        {
+                y = newY;
+        }
+
+        public none setZ(integer newZ)
+        {
+                z = newZ;
+        }
+
+        public none print()
+        {
+                print(ascii"Vector3: {x}, {y}, {z}");
+        }
+}
+
+entry none init(none)
+{
+        return;
+}

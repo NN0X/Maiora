@@ -1,0 +1,34 @@
+#import IO
+#import Types.string
+
+private uint64 openFile(instance path)
+{
+        private instance file = IO::openFile(path);
+        bool isOpen = file.return;
+        if (!isOpen)
+        {
+                IO::printerr(ascii"Failed to open file: {path}\n");
+                return 0u;
+        }
+
+        private uint64 fileSize = file.getSize();
+
+        return fileSize;
+}
+
+entry sint64 main(none)
+{
+        private instance path = string(ascii"example.txt");
+        private uint64 size = openFile(path);
+
+        if (size > 0)
+        {
+                IO::print(ascii"File size of '{path}' is {size} bytes.\n");
+        }
+        else
+        {
+                IO::print(ascii"Could not determine file size for '{path}'.\n");
+        }
+
+        return 0s;
+}

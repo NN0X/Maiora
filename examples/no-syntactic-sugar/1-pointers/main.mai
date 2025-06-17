@@ -1,0 +1,26 @@
+#import IO.print
+
+// INFO: this example uses syntactic sugar for print statements (I believe it's self-explanatory why)
+
+entry sint64 main(none)
+{
+        private address sint64 valueAddr = heap [52s];
+        private address uint64 heapArray = heap [64s, 54s, 44s, 34s, 24s];
+
+        print(ascii"Address of valueAddr = {valueAddr}");
+        print(ascii"Value at valueAddr = {at valueAddr}");
+        for (private uint64 i = 0u; i < 5u; i++)
+        {
+                print(ascii"Address of heapArray + {i*8u} = {heapArray + i*8u}");
+                print(ascii"Value at heapArray[{i}] = {at (heapArray + i*8u)}");
+                print(ascii"Value at heapArray[{i}] = {heapArray[i]}");
+        }
+
+        private sint64 value = at valueAddr;
+        print(ascii"Value at valueAddr after dereferencing = {value}");
+
+        free valueAddr; // free memory under valueAddr `free valueAddr` collapeses to free `valueAddr:1`;
+        free heapArray; // free works like free(pointer) in C
+
+        return 0s;
+}
