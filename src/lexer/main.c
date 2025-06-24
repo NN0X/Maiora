@@ -5,70 +5,6 @@
 
 const uint64_t MAX_FILE_NAME_LEN = 1024;
 
-const char* KEYW_RETURN = "return";
-
-const char* KEYW_PUBLIC = "public";
-const char* KEYW_PRIVATE = "private";
-const char* KEYW_ENTRY = "entry";
-
-const char* KEYW_INSTANCE = "instance";
-const char* KEYW_FUNCTION = "function";
-
-const char* KEYW_HEAP = "heap";
-const char* KEYW_ADDRESS = "address";
-const char* KEYW_REFERENCE = "reference";
-const char* KEYW_REF = "ref";
-const char* KEYW_AT = "at";
-
-const char* KEYW_WHILE = "while";
-const char* KEYW_FOR = "for";
-const char* KEYW_IF = "if";
-const char* KEYW_ELSE = "else";
-const char* KEYW_CONTINUE = "continue";
-const char* KEYW_BREAK = "break";
-const char* KEYW_SWITCH = "switch";
-const char* KEYW_CASE = "case";
-
-const char* OP_EQUALS = "==";
-const char* OP_LESS = "<";
-const char* OP_MORE = ">";
-
-const char* OP_FROM = ".";
-const char* OP_IN = ":";
-
-const char* OP_ASSIGN = "=";
-const char* OP_ADD = "+";
-const char* OP_SUBTRACT = "-";
-const char* OP_DIVIDE = "/";
-const char* OP_MULTIPLY = "*";
-
-const char* OP_LCURLY = "{";
-const char* OP_RCURLY = "}";
-const char* OP_LBRACKET = "[";
-const char* OP_RBRACKET = "]";
-const char* OP_LPAR = "(";
-const char* OP_RPAR = ")";
-
-const char* TYPE_NONE = "none";
-const char* TYPE_BOOL = "bool";
-
-const char* TYPE_SINT8 = "sint8";
-const char* TYPE_SINT16 = "sint16";
-const char* TYPE_SINT32 = "sint32";
-const char* TYPE_SINT64 = "sint64";
-const char* TYPE_UINT8 = "uint8";
-const char* TYPE_UINT16 = "uint16";
-const char* TYPE_UINT32 = "uint32";
-const char* TYPE_UINT64 = "uint64";
-
-const char* TYPE_FLOAT8 = "float8";
-const char* TYPE_FLOAT16 = "float16";
-const char* TYPE_FLOAT32 = "float32";
-const char* TYPE_FLOAT64 = "float64";
-
-const char* TYPE_ASCII = "ascii";
-const char* TYPE_UTF8 = "utf8";
-
 enum Token
 {
         // --- KEYWORDS ---
@@ -108,6 +44,12 @@ enum Token
         TOK_OP_EQUALS,
         TOK_OP_LESS,
         TOK_OP_MORE,
+        TOK_OP_LESS_EQUALS,
+        TOK_OP_MORE_EQUALS,
+        TOK_OP_NOT_EQUALS,
+        TOK_OP_AND,             // &&
+        TOK_OP_OR,              // ||
+        TOK_OP_NOT,             // !
 
         // accessors
         TOK_OP_FROM,            // .
@@ -119,6 +61,15 @@ enum Token
         TOK_OP_SUBTRACT,
         TOK_OP_DIVIDE,
         TOK_OP_MULTIPLY,
+        TOK_OP_MODULO,          // %
+        TOK_OP_INCREMENT,       // ++
+        TOK_OP_DECREMENT,       // --
+        TOK_OP_BITWISE_AND,     // &
+        TOK_OP_BITWISE_OR,      // |
+        TOK_OP_BITWISE_XOR,     // ^
+        TOK_OP_BITWISE_NOT,     // ~
+        TOK_OP_SHIFT_LEFT,      // <<
+        TOK_OP_SHIFT_RIGHT,     // >>
 
         // multi-purpose
         TOK_OP_LCURLY,          // {
@@ -308,10 +259,10 @@ LData_t tokenizeSource(char* src, LMeta_t* metadata)
 
 int main(int argc, char *argv[])
 {
-        // expected call: ./main <input_file>.mai
+        // expected call: ./main <input_file>.mai <output_file>.tok
 
-        if (argc != 2) {
-                fprintf(stderr, "Usage: %s <input_file>\n", argv[0]);
+        if (argc != 3) {
+                fprintf(stderr, "Usage: %s <input_file>.mai <output_file>.tok\n", argv[0]);
                 return 1;
         }
 
