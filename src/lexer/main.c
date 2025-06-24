@@ -1,7 +1,12 @@
 #include <stdio.h>
-#include <cstdint.h>
+#include <stdint.h>
+#include <string.h>
+#include <stdlib.h>
 
 const uint64_t MAX_FILE_NAME_LEN = 1024;
+
+const char* KEYW_RETURN = "return";
+const char* KEYW_PUBLIC = "public";
 
 enum Token
 {
@@ -130,9 +135,95 @@ typedef struct Tok
 typedef struct LexerMetadata
 {
         char* filename;
-        uint64_t nameSize;
+        uint64_t fileSize;
         uint64_t numTokens;
 } LMeta_t;
+
+FILE* openSourceFile(char* filename, LMeta_t* metadata)
+{
+        uint64_t nameSize = strlen(filename);
+        if (nameSize == 0)
+        {
+                fprintf(stderr, "nameSize cannot be 0\n");
+                return NULL;
+        }
+
+        char extension[4] = {filename[nameSize - 4], filename[nameSize - 3],
+                             filename[nameSize - 2], filename[nameSize - 1]};
+
+        if (strcmp(extension, ".mai") != 0)
+        {
+                fprintf(stderr, "Provided file is not a Maiora source file.\n");
+                return NULL;
+        }
+
+        char *srcname = (char*)malloc(MAX_FILE_NAME_LEN);
+        if (srcname == NULL)
+        {
+                fprintf(stderr, "Memory allocation failed for srcname.\n");
+                return NULL;
+        }
+
+        srcname = strncpy(srcname, filename, MAX_FILE_NAME_LEN);
+        if (strcmp(srcname, filename) != 0)
+        {
+                fprintf(stderr, "Filename of: %s is too long or strncpy failed.\n", filename);
+                return NULL;
+        }
+
+        FILE* file = fopen(srcname, "r");
+        if (file == NULL)
+        {
+                fprintf(stderr, "File: %s could not be opened.\n", filename);
+                return NULL;
+        }
+
+        metadata->filename = (char*)malloc(nameSize);
+        if (metadata->filename == NULL)
+        {
+                fprintf(stderr, "Memory allocation failed for metadata->filename.\n");
+                return NULL;
+        }
+
+        metadata->filename = strncpy(metadata->filename, srcname, nameSize);
+        if (strcmp(metadata->filename, srcname) != 0)
+        {
+                fprintf(stderr, "strncpy failed on metadata->filename.\n");
+                return NULL;
+        }
+
+        return file;
+}
+
+char* loadSourceFile(FILE* file, LMeta_t* metadata)
+{
+        fseek(file, 0, SEEK_END);
+        uint64_t fileSize = ftell(file);
+        fseek(file, 0, SEEK_SET);
+        if (fileSize <= 0)
+        {
+                fprintf(stderr, "File size is %lu", fileSize);
+                return NULL;
+        }
+
+        char* data = (char*)malloc(fileSize);
+        if (data == NULL)
+        {
+                fprintf(stderr, "Memory allocation failed for data.\n");
+                return NULL;
+        }
+
+        uint64_t size = fread(data, 1, fileSize, file);
+        if (size != fileSize)
+        {
+                fprintf(stderr, "Wrong amount of data read. Got: %lu Expected: %lu\n", size, fileSize);
+                return NULL;
+        }
+
+        metadata->fileSize = fileSize;
+
+        return data;
+}
 
 int main(int argc, char *argv[])
 {
@@ -143,18 +234,18 @@ int main(int argc, char *argv[])
                 return 1;
         }
 
-        char *filename[MAX_FILE_NAME_LEN];
-        filename = strncpy(filename, argv[1], MAX_FILE_NAME_LEN);
-        if (strcmp(filename, argv[1]) != 0)
-        {
-                fprintf(stderr, "Filename of: %s is too long.", argv[1]);
+        LMeta_t metadata;
+
+        FILE* file = openSourceFile(argv[1], &metadata);
+        if (file == NULL) {
+                fprintf(stderr, "Failed to open source file.\n");
                 return 1;
         }
 
-        FILE* file = fopen(filename, "r");
-        if (file == NULL)
-        {
-                fprintf(stderr, "File: %s could not be opened.", argv[1]);
+        char* src = loadSourceFile(file, &metadata);
+        fclose(file);
+        if (src == NULL) {
+                fprintf(stderr, "Failed to load source file.\n");
                 return 1;
         }
 
