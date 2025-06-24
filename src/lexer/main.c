@@ -6,7 +6,68 @@
 const uint64_t MAX_FILE_NAME_LEN = 1024;
 
 const char* KEYW_RETURN = "return";
+
 const char* KEYW_PUBLIC = "public";
+const char* KEYW_PRIVATE = "private";
+const char* KEYW_ENTRY = "entry";
+
+const char* KEYW_INSTANCE = "instance";
+const char* KEYW_FUNCTION = "function";
+
+const char* KEYW_HEAP = "heap";
+const char* KEYW_ADDRESS = "address";
+const char* KEYW_REFERENCE = "reference";
+const char* KEYW_REF = "ref";
+const char* KEYW_AT = "at";
+
+const char* KEYW_WHILE = "while";
+const char* KEYW_FOR = "for";
+const char* KEYW_IF = "if";
+const char* KEYW_ELSE = "else";
+const char* KEYW_CONTINUE = "continue";
+const char* KEYW_BREAK = "break";
+const char* KEYW_SWITCH = "switch";
+const char* KEYW_CASE = "case";
+
+const char* OP_EQUALS = "==";
+const char* OP_LESS = "<";
+const char* OP_MORE = ">";
+
+const char* OP_FROM = ".";
+const char* OP_IN = ":";
+
+const char* OP_ASSIGN = "=";
+const char* OP_ADD = "+";
+const char* OP_SUBTRACT = "-";
+const char* OP_DIVIDE = "/";
+const char* OP_MULTIPLY = "*";
+
+const char* OP_LCURLY = "{";
+const char* OP_RCURLY = "}";
+const char* OP_LBRACKET = "[";
+const char* OP_RBRACKET = "]";
+const char* OP_LPAR = "(";
+const char* OP_RPAR = ")";
+
+const char* TYPE_NONE = "none";
+const char* TYPE_BOOL = "bool";
+
+const char* TYPE_SINT8 = "sint8";
+const char* TYPE_SINT16 = "sint16";
+const char* TYPE_SINT32 = "sint32";
+const char* TYPE_SINT64 = "sint64";
+const char* TYPE_UINT8 = "uint8";
+const char* TYPE_UINT16 = "uint16";
+const char* TYPE_UINT32 = "uint32";
+const char* TYPE_UINT64 = "uint64";
+
+const char* TYPE_FLOAT8 = "float8";
+const char* TYPE_FLOAT16 = "float16";
+const char* TYPE_FLOAT32 = "float32";
+const char* TYPE_FLOAT64 = "float64";
+
+const char* TYPE_ASCII = "ascii";
+const char* TYPE_UTF8 = "utf8";
 
 enum Token
 {
@@ -123,14 +184,14 @@ enum Token
 
 };
 
-typedef struct Tok
+typedef struct LexerToken
 {
         char* data;
         uint32_t token;
         uint64_t line;
         uint64_t pos;
         uint64_t len;
-} Tok_t;
+} LTok_t;
 
 typedef struct LexerMetadata
 {
@@ -138,6 +199,12 @@ typedef struct LexerMetadata
         uint64_t fileSize;
         uint64_t numTokens;
 } LMeta_t;
+
+typedef struct LexerData
+{
+        LTok_t* tokens;
+        LMeta_t metadata;
+} LData_t;
 
 FILE* openSourceFile(char* filename, LMeta_t* metadata)
 {
@@ -225,6 +292,20 @@ char* loadSourceFile(FILE* file, LMeta_t* metadata)
         return data;
 }
 
+LData_t tokenizeSource(char* src, LMeta_t* metadata)
+{
+        LData_t lexerData;
+        lexerData.metadata = *metadata;
+        lexerData.tokens = (LTok_t*)malloc(sizeof(LTok_t) * metadata->fileSize);
+        if (lexerData.tokens == NULL)
+        {
+                fprintf(stderr, "Memory allocation failed for tokens");
+                return NULL;
+        }
+
+        return lexerData;
+}
+
 int main(int argc, char *argv[])
 {
         // expected call: ./main <input_file>.mai
@@ -246,6 +327,13 @@ int main(int argc, char *argv[])
         fclose(file);
         if (src == NULL) {
                 fprintf(stderr, "Failed to load source file.\n");
+                return 1;
+        }
+
+        LData_t lexerData = tokenizeSource(src, &metadata);
+        if (lexerData = NULL)
+        {
+                fprintf(stderr, "Failed to tokenize source file.\n");
                 return 1;
         }
 
