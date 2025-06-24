@@ -5,7 +5,7 @@ public none foo1(reference sint64 numbers)
         print("number at 0: ", numbers[0]);
 }
 
-public none foo2(address sint64 numbers)
+public none foo1(address sint64 numbers)
 {
         print("number at 0: ", numbers[0]);
         numbers[1] = 101s;
@@ -21,7 +21,7 @@ entry sint32 main(none)
 
         foo1(ref numbers);
 
-        foo2(numbers);
+        foo1(numbers);
 
         return 0s;
 }
