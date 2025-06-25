@@ -270,13 +270,17 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
         // INFO: statement is a line of code between semicolons or before curlies in case of blocks
 
         uint64_t line = 0;
-        char* statement = (char*)malloc(MAX_STATEMENT_LEN);
+        char* statement = (char*)malloc(MAX_STATEMENT_LEN + 1);
 
         uint64_t pos = 0;
         for (uint64_t i = 0; i < metadata->fileSize; i++)
         {
                 char c = src[i];
-                if (c != '\n')
+                if (c == '\n')
+                {
+                        continue;
+                }
+                if (c != ';' && c != '{' && c != '}')
                 {
                         statement[pos] = c;
                         pos++;
@@ -288,7 +292,18 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                         }
                         continue;
                 }
+                if (c == '{' || c == '}')
+                {
+                        // TODO: create token
+                }
+
                 line++;
+
+                // --- DEBUG INFO ---
+                printf("Statement %lu: ", line);
+                fwrite(statement, 1, pos, stdout);
+                getchar();
+                // ------------------
 
                 char* tokenData = (char*)malloc(MAX_STATEMENT_LEN);
                 uint64_t tokenPos = 0;
@@ -304,6 +319,7 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                         tokenData[tokenPos] = statement[currPos];
                         tokenPos++;
                 }
+                pos = 0;
                 free(tokenData);
         }
 
