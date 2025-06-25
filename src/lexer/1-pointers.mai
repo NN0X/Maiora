@@ -1,18 +1,26 @@
-#import IO.print
+public none IO::print(ascii[] str, uint64 size)
+{
+}
+
+public none IO::io(none)
+{
+
+}
 
 public none foo1(reference sint64 numbers)
 {
-        print("number at 0: ", numbers[0]);
+        IO::print(ascii"number at 0: {numbers[0]}");
 }
 
 public none foo1(address sint64 numbers)
 {
-        print("number at 0: ", numbers[0]);
+        IO::print(ascii"number at 0: {numbers[0]}");
         numbers[1] = 101s;
 }
 
 entry sint32 main(none)
 {
+        IO::io(none);
         address sint64 numbers = heap 10*[0s];
         numbers[0] = 42s;
 
@@ -25,10 +33,3 @@ entry sint32 main(none)
 
         return 0s;
 }
-
-// INFO: reference is immutable but it can be reassigned
-// INFO: address is mutable but it cannot be reassigned
-// INFO: reference is created from an existing address
-// INFO: references have inherently the same scope as the address they refer to
-// INFO: returning reference or address from a function is not allowed
-// INFO: address is freed automatically when it goes out of scope
