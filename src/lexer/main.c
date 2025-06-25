@@ -260,6 +260,7 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
 {
         lexerData->metadata = *metadata;
         lexerData->tokens = (LTok_t*)malloc(sizeof(LTok_t) * metadata->fileSize);
+        metadata->numTokens = 0;
         if (lexerData->tokens == NULL)
         {
                 fprintf(stderr, "Memory allocation failed for tokens");
@@ -269,7 +270,7 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
 
         // INFO: statement is a line of code between semicolons or before curlies in case of blocks
 
-        uint64_t line = 0;
+        uint64_t statementNum = 0;
         char* statement = (char*)malloc(MAX_STATEMENT_LEN + 1);
 
         uint64_t pos = 0;
@@ -295,9 +296,23 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                 if (c == '{' || c == '}')
                 {
                         // TODO: create token
+                        LTok_t token;
+                        if (c == '{')
+                        {
+                                token.token = TOK_OP_LCURLY;
+                        }
+                        else
+                        {
+                                token.token = TOK_OP_RCURLY;
+                        }
+                        token.line = statementNum;
+                        token.pos = 0;
+
+                        lexerData->tokens[metadata->numTokens] = token;
+                        metadata->numTokens++;
                 }
 
-                line++;
+                statementNum++;
 
                 // --- DEBUG INFO ---
                 printf("Statement %lu: ", line);
@@ -314,6 +329,8 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                                 // TODO: create token
 
                                 tokenPos = 0;
+                                lexerData->tokens[metadata->numTokens] = token;
+                                metadata->numTokens++;
                                 continue;
                         }
                         tokenData[tokenPos] = statement[currPos];
