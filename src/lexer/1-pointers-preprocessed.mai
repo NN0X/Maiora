@@ -1,11 +1,4 @@
-public none IO::print(ascii[] str, uint64 size)
-{
-}
-
-public none IO::io(none)
-{
-
-}
+public none IO::print(ascii[] str, uint64 size) {} public none IO::io(none) {}
 
 public none foo1(reference sint64 numbers)
 {
@@ -19,8 +12,7 @@ public none foo1(address sint64 numbers)
 }
 
 entry sint32 main(none)
-{
-        IO::io(none);
+{       IO::io(none);
         address sint64 numbers = heap 10*[0s];
         numbers[0] = 42s;
 
@@ -33,3 +25,10 @@ entry sint32 main(none)
 
         return 0s;
 }
+
+
+
+
+
+
+
