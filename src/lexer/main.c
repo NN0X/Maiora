@@ -18,6 +18,12 @@ int openSourceFile(FILE** file, char* filename, LMeta_t* metadata)
                 return 1;
         }
 
+        if (nameSize < 4)
+        {
+                fprintf(stderr, "nameSize cannot be smaller than 4\n");
+                return 1;
+        }
+
         char extension[4] = {filename[nameSize - 4], filename[nameSize - 3],
                              filename[nameSize - 2], filename[nameSize - 1]};
 
@@ -27,12 +33,13 @@ int openSourceFile(FILE** file, char* filename, LMeta_t* metadata)
                 return 1;
         }
 
-        char *srcname = (char*)malloc(MAX_FILE_NAME_LEN);
+        char *srcname = (char*)malloc(MAX_FILE_NAME_LEN + 1);
         if (srcname == NULL)
         {
                 fprintf(stderr, "Memory allocation failed for srcname.\n");
                 return 1;
         }
+        srcname[MAX_FILE_NAME_LEN] = '\0';
 
         srcname = strncpy(srcname, filename, MAX_FILE_NAME_LEN);
         if (strcmp(srcname, filename) != 0)
@@ -46,23 +53,28 @@ int openSourceFile(FILE** file, char* filename, LMeta_t* metadata)
         if (*file == NULL)
         {
                 fprintf(stderr, "File: %s could not be opened.\n", filename);
+                free(srcname);
                 return 1;
         }
 
-        metadata->filename = (char*)malloc(nameSize);
+        metadata->filename = (char*)malloc(nameSize + 1);
         if (metadata->filename == NULL)
         {
                 fprintf(stderr, "Memory allocation failed for metadata->filename.\n");
+                free(srcname);
                 return 1;
         }
+        metadata->filename[nameSize] = '\0';
 
         metadata->filename = strncpy(metadata->filename, srcname, nameSize);
         if (strcmp(metadata->filename, srcname) != 0)
         {
                 fprintf(stderr, "strncpy failed on metadata->filename.\n");
+                free(srcname);
                 return 1;
         }
 
+        free(srcname);
         uint64_t currLine = 1;
 
         return 0;
@@ -94,6 +106,36 @@ int loadSourceFile(char** src, FILE* file, LMeta_t* metadata)
         }
 
         metadata->fileSize = fileSize;
+
+        return 0;
+}
+
+int generateTokens(LTok_t* token, char* statement, uint64_t begin, uint64_t end, uint64_t* num)
+{
+        *num = 0;
+
+        char* temp = statement + begin;
+        printf("Generating token from: ");
+        fwrite(temp, 1, end - begin, stdout);
+        printf("\n");
+
+        char* tempData = (char*)malloc(MAX_STATEMENT_LEN);
+        if (tempData == NULL)
+        {
+                fprintf(stderr, "Memory allocation failed for tokens");
+                return 1;
+        }
+
+        uint64_t tempDataPos = 0;
+        for (uint64_t i = begin; i < end; i++)
+        {
+                tempData[tempDataPos] = statement[i];
+                tempDataPos++;
+
+                // TODO: here compare with keywords etc and create tokens if applicable
+        }
+
+        free(tempData);
 
         return 0;
 }
@@ -166,16 +208,34 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
 
                 char* tokenData = (char*)malloc(MAX_STATEMENT_LEN);
                 uint64_t tokenPos = 0;
-                for (uint64_t currPos = 0; currPos < pos + 1; currPos++)
+                for (uint64_t currPos = 0; currPos < pos; currPos++)
                 {
                         if (statement[currPos] == ' ' && tokenPos != 0)
                         {
                                 // TODO: create token
-                                LTok_t token;
+                                LTok_t* tokens = (LTok_t*)malloc(sizeof(LTok_t)*MAX_STATEMENT_LEN);
+                                if (tokens == NULL)
+                                {
+                                        fprintf(stderr, "Memory allocation failed for tokens");
+                                        free(statement);
+                                        return 1;
+                                }
+
+                                uint64_t numGenerated;
+                                if (generateTokens(tokens, statement, currPos - tokenPos, currPos, &numGenerated) == 1)
+                                {
+                                        fprintf(stderr, "Failed to tokenize statement: ");
+                                        fwrite(statement, 1, pos, stderr);
+                                        free(statement);
+                                        return 1;
+                                }
 
                                 tokenPos = 0;
-                                lexerData->tokens[metadata->numTokens] = token;
-                                metadata->numTokens++;
+                                for (uint64_t i = 0; i < numGenerated; i++)
+                                {
+                                        lexerData->tokens[metadata->numTokens] = tokens[i];
+                                        metadata->numTokens++;
+                                }
                                 continue;
                         }
                         tokenData[tokenPos] = statement[currPos];
@@ -190,7 +250,7 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
         return 0;
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
         // expected call: ./main <input_file>.mai <output_file>.tok
 
