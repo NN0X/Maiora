@@ -131,6 +131,8 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t begin, uint64_t end
                 return 1;
         }
 
+        // FIX: rewrite below loop to pass whole statement to tokenFit
+        // INFO: tokenFit should match tokens to data so the chosen token is the longest possible match
         uint64_t tempDataPos = 0;
         for (uint64_t i = begin; i < end; i++)
         {
