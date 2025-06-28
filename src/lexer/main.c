@@ -110,7 +110,12 @@ int loadSourceFile(char** src, FILE* file, LMeta_t* metadata)
         return 0;
 }
 
-int generateTokens(LTok_t* token, char* statement, uint64_t begin, uint64_t end, uint64_t* num)
+int tokenFit(LTok_t* token, char* data, int dataLen)
+{
+        return 1;
+}
+
+int generateTokens(LTok_t* tokens, char* statement, uint64_t begin, uint64_t end, uint64_t* num)
 {
         *num = 0;
 
@@ -132,7 +137,19 @@ int generateTokens(LTok_t* token, char* statement, uint64_t begin, uint64_t end,
                 tempData[tempDataPos] = statement[i];
                 tempDataPos++;
 
+                // ex. statement: "sint32 var = 5s" -> tokens = [TOK_TYPE_SINT32, TOK_ID_VARIABLE, TOK_OP_ASSIGN, TOK_LIT_SINT32]
+
                 // TODO: here compare with keywords etc and create tokens if applicable
+
+                LTok_t token;
+                if (tokenFit(&token, tempData, tempDataPos) == 0)
+                {
+                        tokens[*num] = token;
+                        (*num)++;
+                        free(tempData);
+                        tempDataPos = 0;
+                        tempData = (char*)malloc(MAX_STATEMENT_LEN);
+                }
         }
 
         free(tempData);
@@ -152,7 +169,7 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
         }
 
 
-        // INFO: statement is a line of code between semicolons or before and after curlies in case of blocks
+        // INFO: statement is a line of code between semicolons or before curlies
 
         uint64_t statementNum = 0;
         uint64_t line = 1;
@@ -167,7 +184,7 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                         line++;
                         continue;
                 }
-                if (c != ';' && c != '{' && c != '}')
+                else if (c != ';' && c != '{' && c != '}')
                 {
                         statement[pos] = c;
                         pos++;
@@ -179,9 +196,8 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                         }
                         continue;
                 }
-                if (c == '{' || c == '}')
+                else if (c == '{' || c == '}')
                 {
-                        // TODO: create token
                         LTok_t token;
                         if (c == '{')
                         {
@@ -213,7 +229,7 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                         if (statement[currPos] == ' ' && tokenPos != 0)
                         {
                                 // TODO: create token
-                                LTok_t* tokens = (LTok_t*)malloc(sizeof(LTok_t)*MAX_STATEMENT_LEN);
+                                LTok_t* tokens = (LTok_t*)malloc(sizeof(LTok_t) * MAX_STATEMENT_LEN);
                                 if (tokens == NULL)
                                 {
                                         fprintf(stderr, "Memory allocation failed for tokens");
