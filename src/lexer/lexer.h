@@ -1,6 +1,8 @@
 #ifndef LEXER_H
 #define LEXER_H
 
+#include <stdint.h>
+
 #include "token.h"
 
 typedef struct LexerMetadata
