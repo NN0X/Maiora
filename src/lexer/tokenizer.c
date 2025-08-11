@@ -1,56 +1,42 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "token.h"
 #include "lexer.h"
 #include "loader.h"
 
-int tokenFit(LTok_t* token, char* data, int dataLen)
-{
-        return 1;
-}
-
-int generateTokens(LTok_t* tokens, char* statement, uint64_t begin, uint64_t end, uint64_t* num)
+int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
 {
         *num = 0;
 
-        char* temp = statement + begin;
-        printf("Generating token from: ");
-        fwrite(temp, 1, end - begin, stdout);
+        // --- DEBUG INFO ---
+        printf("Generating tokens from: ");
+        fwrite(statement, 1, len, stdout);
         printf("\n");
+        // ------------------
 
-        char* tempData = (char*)malloc(MAX_STATEMENT_LEN);
-        if (tempData == NULL)
+        uint64_t* spacePositions = (uint64_t*)malloc(1024*sizeof(uint64_t));
+        if (spacePositions == NULL)
         {
-                fprintf(stderr, "Memory allocation failed for tokens");
+                fprintf(stderr, "Memory allocation failed for spacePositions");
                 return 1;
         }
 
-        // FIX: rewrite below loop to pass whole statement to tokenFit
-        // INFO: tokenFit should match tokens to data so the chosen token is the longest possible match
-        uint64_t tempDataPos = 0;
-        for (uint64_t i = begin; i < end; i++)
+        uint64_t numSpaces = 0;
+        for (uint64_t i = 0; i < len; i++)
         {
-                tempData[tempDataPos] = statement[i];
-                tempDataPos++;
-
-                // ex. statement: "sint32 var = 5s" -> tokens = [TOK_TYPE_SINT32, TOK_ID_VARIABLE, TOK_OP_ASSIGN, TOK_LIT_SINT32]
-
-                // TODO: here compare with keywords etc and create tokens if applicable
-
-                LTok_t token;
-                if (tokenFit(&token, tempData, tempDataPos) == 0)
+                if (statement[i] == ' ')
                 {
-                        tokens[*num] = token;
-                        (*num)++;
-                        free(tempData);
-                        tempDataPos = 0;
-                        tempData = (char*)malloc(MAX_STATEMENT_LEN);
+                        spacePositions[numSpaces] = i;
+                        numSpaces++;
                 }
         }
 
-        free(tempData);
+
+        // INFO: tokenFit should match tokens to data so the chosen token is the longest possible match
+        // INFO: ex. statement: "sint32 var = 5s" -> tokens = [TOK_TYPE_SINT32, TOK_ID_VARIABLE, TOK_OP_ASSIGN, TOK_LIT_SINT32]
 
         return 0;
 }
@@ -115,45 +101,33 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                 statementNum++;
 
                 // --- DEBUG INFO ---
-                printf("Statement %lu at line %lu: ", statementNum, line);
-                fwrite(statement, 1, pos, stdout);
-                getchar();
+                //printf("Statement %lu at line %lu: ", statementNum, line);
+                //fwrite(statement, 1, pos, stdout);
+                //getchar();
                 // ------------------
 
                 char* tokenData = (char*)malloc(MAX_STATEMENT_LEN);
-                uint64_t tokenPos = 0;
-                for (uint64_t currPos = 0; currPos < pos; currPos++)
+                LTok_t* tokens = (LTok_t*)malloc(sizeof(LTok_t) * MAX_STATEMENT_LEN);
+                if (tokens == NULL)
                 {
-                        if (statement[currPos] == ' ' && tokenPos != 0)
-                        {
-                                // TODO: create token
-                                LTok_t* tokens = (LTok_t*)malloc(sizeof(LTok_t) * MAX_STATEMENT_LEN);
-                                if (tokens == NULL)
-                                {
-                                        fprintf(stderr, "Memory allocation failed for tokens");
-                                        free(statement);
-                                        return 1;
-                                }
+                    fprintf(stderr, "Memory allocation failed for tokens");
+                    free(statement);
+                    return 1;
+                }
 
-                                uint64_t numGenerated;
-                                if (generateTokens(tokens, statement, currPos - tokenPos, currPos, &numGenerated) == 1)
-                                {
-                                        fprintf(stderr, "Failed to tokenize statement: ");
-                                        fwrite(statement, 1, pos, stderr);
-                                        free(statement);
-                                        return 1;
-                                }
+                uint64_t numGenerated;
+                if (generateTokens(tokens, statement, pos, &numGenerated) == 1)
+                {
+                    fprintf(stderr, "Failed to tokenize statement: ");
+                    fwrite(statement, 1, pos, stderr);
+                    free(statement);
+                    return 1;
+                }
 
-                                tokenPos = 0;
-                                for (uint64_t i = 0; i < numGenerated; i++)
-                                {
-                                        lexerData->tokens[metadata->numTokens] = tokens[i];
-                                        metadata->numTokens++;
-                                }
-                                continue;
-                        }
-                        tokenData[tokenPos] = statement[currPos];
-                        tokenPos++;
+                for (uint64_t i = 0; i < numGenerated; i++)
+                {
+                    lexerData->tokens[metadata->numTokens] = tokens[i];
+                    metadata->numTokens++;
                 }
                 pos = 0;
                 free(tokenData);
