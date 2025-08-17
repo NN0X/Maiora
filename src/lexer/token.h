@@ -63,6 +63,10 @@ enum Token
         TOK_OP_MODULO,          // %
         TOK_OP_INCREMENT,       // ++
         TOK_OP_DECREMENT,       // --
+        TOK_OP_ADD_ASSIGN,      // +=
+        TOK_OP_SUB_ASSIGN,      // -=
+        TOK_OP_DIV_ASSIGN,      // /=
+        TOK_OP_MUL_ASSIGN,      // *=
         TOK_OP_BITWISE_AND,     // &
         TOK_OP_BITWISE_OR,      // |
         TOK_OP_BITWISE_XOR,     // ^
@@ -106,6 +110,8 @@ enum Token
         TOK_TYPE_UTF8,          // utf8
 
 
+        TOK_META_CONSTS_END,
+
         // --- LITERALS ---
 
         TOK_LIT_SINT8,          // -1s
@@ -141,7 +147,10 @@ enum Token
         // modules
         TOK_ID_MODULE,          // <tok_id_module>::<tok_id_function> -> IO::print
 
+        TOK_META_NUM,
 };
+
+extern const char* TOKENS[TOK_META_NUM];
 
 typedef struct LexerToken
 {
