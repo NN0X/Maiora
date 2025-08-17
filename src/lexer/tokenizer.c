@@ -7,6 +7,11 @@
 #include "lexer.h"
 #include "loader.h"
 
+int getLongestTokenFit(char* fit, char* antifit, LTok_t* token, char* word)
+{
+        return 0;
+}
+
 int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
 {
         *num = 0;
@@ -122,9 +127,51 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
         // INFO: tokenFit should match tokens to data so the chosen token is the longest possible match
         // INFO: ex. statement: "sint32 var = 5s" -> tokens = [TOK_TYPE_SINT32, TOK_ID_VARIABLE, TOK_OP_ASSIGN, TOK_LIT_SINT32]
 
+        uint64_t numWordsProcessed = 0;
         for (uint64_t i = 0; i < numWords; i++)
         {
+                if (strlen(words[i]) == 0)
+                {
+                        continue;
+                }
 
+                char* fit = (char*)malloc(MAX_STATEMENT_LEN);
+                if (fit == NULL)
+                {
+                        fprintf(stderr, "Memory allocation failed for fit");
+                        return 1;
+                }
+
+                char* antifit = (char*)malloc(MAX_STATEMENT_LEN);
+                if (antifit == NULL)
+                {
+                        fprintf(stderr, "Memory allocation failed for antifit");
+                        return 1;
+                }
+
+                LTok_t token;
+                if (getLongestTokenFit(fit, antifit, &token, words[i]) == 1)
+                {
+                        fprintf(stderr, "getLongestTokenFit failed for word %s", words[i]);
+                        return 1;
+                }
+
+                uint64_t fitLen = strlen(fit);
+                uint64_t wordLen = strlen(words[i]);
+
+                free(words[i]);
+                words[i] = antifit;
+
+                if (fitLen == wordLen)
+                {
+                        numWordsProcessed++;
+                }
+                else
+                {
+                        words[i] = antifit;
+                }
+
+                // TODO: take care of token
         }
 
         for (uint64_t i = 0; i < numWords; i++)
