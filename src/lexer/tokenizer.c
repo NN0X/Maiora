@@ -7,7 +7,7 @@
 #include "lexer.h"
 #include "loader.h"
 
-int getLongestTokenFit(char* fit, char* antifit, LTok_t* token, char* word)
+int getLongestTokenFit(char* fit, char* antifit, LTok_t* token, char* word, LTok_t* tokens, uint64_t numTokens)
 {
         return 0;
 }
@@ -124,7 +124,6 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
                 numWords++;
         }
 
-        // INFO: tokenFit should match tokens to data so the chosen token is the longest possible match
         // INFO: ex. statement: "sint32 var = 5s" -> tokens = [TOK_TYPE_SINT32, TOK_ID_VARIABLE, TOK_OP_ASSIGN, TOK_LIT_SINT32]
 
         uint64_t numWordsProcessed = 0;
@@ -150,7 +149,7 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
                 }
 
                 LTok_t token;
-                if (getLongestTokenFit(fit, antifit, &token, words[i]) == 1)
+                if (getLongestTokenFit(fit, antifit, &token, words[i], tokens, *num) == 1)
                 {
                         fprintf(stderr, "getLongestTokenFit failed for word %s", words[i]);
                         return 1;
