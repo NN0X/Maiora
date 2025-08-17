@@ -11,6 +11,11 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
 {
         *num = 0;
 
+        if (len == 0)
+        {
+                return 0;
+        }
+
         // --- DEBUG INFO ---
         printf("Generating tokens from: ");
         fwrite(statement, 1, len, stdout);
@@ -34,9 +39,99 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
                 }
         }
 
+        char** words = (char**)malloc(MAX_STATEMENT_LEN * sizeof(char*));
+        if (words == NULL)
+        {
+                fprintf(stderr, "Memory allocation failed for words");
+                return 1;
+        }
+
+        uint64_t numWords = 0;
+        if (statement[0] != ' ')
+        {
+                uint64_t wordLen = 0;
+                if (numSpaces == 0)
+                {
+                        wordLen = len + 1;
+                }
+                else
+                {
+                        wordLen = spacePositions[0] + 1;
+                }
+
+                char* word = (char*)malloc(wordLen);
+                if (word == NULL)
+                {
+                        fprintf(stderr, "Memory allocation failed for word");
+                        return 1;
+                }
+
+                memcpy(word, statement, wordLen - 1);
+                if (word == NULL)
+                {
+                        fprintf(stderr, "memcpy failed for statement into word");
+                        return 1;
+                }
+                word[wordLen - 1] = '\0';
+
+                words[numWords] = word;
+                numWords++;
+        }
+
+        for(uint64_t i = 0; i < numSpaces; i++)
+        {
+                uint64_t wordLen = 0;
+                if (i + 1 == numSpaces)
+                {
+                        wordLen = len - spacePositions[i];
+                }
+                else
+                {
+                        wordLen = spacePositions[i + 1] - spacePositions[i];
+                }
+
+                if (wordLen > MAX_STATEMENT_LEN)
+                {
+                        fprintf(stderr, "Word length larger than MAX_STATEMENT_LEN");
+                        return 1;
+                }
+                else if (wordLen < 2)
+                {
+                        continue;
+                }
+
+                char* word = (char*)malloc(wordLen);
+                if (word == NULL)
+                {
+                        fprintf(stderr, "Memory allocation failed for word");
+                        return 1;
+                }
+
+                memcpy(word, statement + spacePositions[i] + 1, wordLen - 1);
+                if (word == NULL)
+                {
+                        fprintf(stderr, "memcpy failed for statement into word");
+                        return 1;
+                }
+                word[wordLen - 1] = '\0';
+
+                words[numWords] = word;
+                numWords++;
+        }
 
         // INFO: tokenFit should match tokens to data so the chosen token is the longest possible match
         // INFO: ex. statement: "sint32 var = 5s" -> tokens = [TOK_TYPE_SINT32, TOK_ID_VARIABLE, TOK_OP_ASSIGN, TOK_LIT_SINT32]
+
+        for (uint64_t i = 0; i < numWords; i++)
+        {
+
+        }
+
+        for (uint64_t i = 0; i < numWords; i++)
+        {
+                free(words[i]);
+        }
+        free(words);
 
         return 0;
 }

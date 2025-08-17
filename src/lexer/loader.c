@@ -36,9 +36,9 @@ int openSourceFile(FILE** file, char* filename, LMeta_t* metadata)
                 fprintf(stderr, "Memory allocation failed for srcname.\n");
                 return 1;
         }
-        srcname[MAX_FILE_NAME_LEN] = '\0';
 
-        srcname = strncpy(srcname, filename, MAX_FILE_NAME_LEN);
+        strncpy(srcname, filename, MAX_FILE_NAME_LEN);
+        srcname[MAX_FILE_NAME_LEN] = '\0';
         if (strcmp(srcname, filename) != 0)
         {
                 fprintf(stderr, "Filename of: %s is too long or strncpy failed.\n", filename);
@@ -61,9 +61,9 @@ int openSourceFile(FILE** file, char* filename, LMeta_t* metadata)
                 free(srcname);
                 return 1;
         }
-        metadata->filename[nameSize] = '\0';
 
-        metadata->filename = strncpy(metadata->filename, srcname, nameSize);
+        strncpy(metadata->filename, srcname, nameSize);
+        metadata->filename[nameSize] = '\0';
         if (strcmp(metadata->filename, srcname) != 0)
         {
                 fprintf(stderr, "strncpy failed on metadata->filename.\n");
