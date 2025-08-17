@@ -29,7 +29,7 @@ const char* TOKENS[TOK_META_NUM] = {
     [TOK_OP_MORE] = ">",
     [TOK_OP_LESS_EQUALS] = "<=",
     [TOK_OP_MORE_EQUALS] = ">=",
-    [TOK_OP_NOT_EQUALS] = "!=".
+    [TOK_OP_NOT_EQUALS] = "!=",
     [TOK_OP_AND] = "&&",
     [TOK_OP_OR] = "||",
     [TOK_OP_NOT] = "!",
@@ -76,7 +76,7 @@ const char* TOKENS[TOK_META_NUM] = {
     [TOK_TYPE_UINT8] = "uint8",
     [TOK_TYPE_UINT16] = "uint16",
     [TOK_TYPE_UINT32] = "uint32",
-    [TOK_TYPE_UINT64] = "uint64"
+    [TOK_TYPE_UINT64] = "uint64",
 
     [TOK_TYPE_FLOAT8] = "float8",
     [TOK_TYPE_FLOAT16] = "float16",
