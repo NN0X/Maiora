@@ -7,8 +7,31 @@
 #include "lexer.h"
 #include "loader.h"
 
-int getLongestTokenFit(char* fit, char* antifit, LTok_t* token, char* word, LTok_t* tokens, uint64_t numTokens)
+// INFO: has to begin at word[0]
+int getLongestTokenFit(char* fit, char* antifit, LTok_t* token, char* word)
 {
+        // INFO: example 1
+        // example start word: "main(none)"
+        // input: word = "main(none)"
+        // output: fit = "main", antifit = "(none)", token = "TOK_STR_STUB"
+        // input: word = "(none)"
+        // output: fit = "(", antifit = "none)", token = "TOK_OP_LPAR"
+        // input: word = "none)"
+        // output: fit = "none", antifit = ")", token = "TOK_TYPE_NONE"
+        // input: word = ")"
+        // output: fit = ")", antifit = "", token = "TOK_OP_RPAR"
+        // result: [TOK_STR_STUB, TOK_OP_LPAR, TOK_TYPE_NONE, TOK_OP_RPAR]
+
+        // INFO: example 2
+        // example start word: "\"foo\\"\"" -> string foo" within double quotes so in code "foo\"
+        // input: word = "\"foo\\"\""
+        // output: fit = "\"", antifit = "foo\\"\"", token = "TOK_OP_DQUOTE"
+        // input: word = "foo\\"\""
+        // output: fit = "foo\\"", antifit = "\"", token = "TOK_STR_STUB"
+        // input: word = "\""
+        // output: fit = "\"", antifit = "", token = "TOK_OP_DQUOTE"
+        // result: [TOK_OP_DQUOTE, TOK_STR_STUB, TOK_OP_DQUOTE]
+
         return 0;
 }
 
@@ -149,7 +172,7 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
                 }
 
                 LTok_t token;
-                if (getLongestTokenFit(fit, antifit, &token, words[i], tokens, *num) == 1)
+                if (getLongestTokenFit(fit, antifit, &token, words[i]) == 1)
                 {
                         fprintf(stderr, "getLongestTokenFit failed for word %s", words[i]);
                         return 1;
@@ -172,6 +195,12 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
 
                 // TODO: take care of token
         }
+
+        // TODO: string filtering phase
+
+        // TODO: literation phase
+
+        // TODO: id phase
 
         for (uint64_t i = 0; i < numWords; i++)
         {
@@ -216,7 +245,6 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                         if (pos > MAX_STATEMENT_LEN)
                         {
                                 fprintf(stderr, "Maximum statement length reached.");
-                                free(statement);
                                 return 1;
                         }
                         continue;
@@ -252,7 +280,6 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                 if (tokens == NULL)
                 {
                     fprintf(stderr, "Memory allocation failed for tokens");
-                    free(statement);
                     return 1;
                 }
 
@@ -261,7 +288,6 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                 {
                     fprintf(stderr, "Failed to tokenize statement: ");
                     fwrite(statement, 1, pos, stderr);
-                    free(statement);
                     return 1;
                 }
 

@@ -38,6 +38,8 @@ enum Token
 
         // --- OPERATORS ---
 
+        TOK_META_OP_BEGIN,
+
         // comparators
         TOK_OP_EQUALS,          // ==
         TOK_OP_LESS,            // <
@@ -86,6 +88,8 @@ enum Token
 
         // --- TYPES ---
 
+        TOK_META_TYPE_BEGIN,
+
         TOK_TYPE_NONE,          // none
         TOK_TYPE_BOOL,          // bool
 
@@ -110,9 +114,16 @@ enum Token
         TOK_TYPE_UTF8,          // utf8
 
 
-        TOK_META_CONSTS_END,
+        // --- STRINGS ---
+
+        TOK_STR_STUB,           // placeholder for tokens that can be considered strings before lexer string filtering phase
+
 
         // --- LITERALS ---
+
+        TOK_META_LIT_BEGIN,
+
+        TOK_LIT_STUB,           // placeholder for literals before lexer literation phase
 
         TOK_LIT_SINT8,          // -1s
         TOK_LIT_SINT16,         // -1s
@@ -133,6 +144,10 @@ enum Token
 
 
         // --- IDENTIFIERS ---
+
+        TOK_META_ID_BEGIN,
+
+        TOK_ID_STUB,            // placeholder for ids before lexer id phase
 
         // functions
         TOK_ID_FUNCTION,        // fooFunction
