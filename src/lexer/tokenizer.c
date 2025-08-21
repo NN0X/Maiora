@@ -8,7 +8,7 @@
 #include "loader.h"
 
 // INFO: has to begin at word[0]
-int getLongestTokenFit(char* fit, char* antifit, LTok_t* token, char* word)
+int getFirstTokenFit(char* fit, char* antifit, LTok_t* token, char* word)
 {
         // INFO: example 1
         // example start word: "main(none)"
@@ -172,9 +172,9 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
                 }
 
                 LTok_t token;
-                if (getLongestTokenFit(fit, antifit, &token, words[i]) == 1)
+                if (getFirstTokenFit(fit, antifit, &token, words[i]) == 1)
                 {
-                        fprintf(stderr, "getLongestTokenFit failed for word %s", words[i]);
+                        fprintf(stderr, "getFirstTokenFit failed for word %s", words[i]);
                         return 1;
                 }
 
