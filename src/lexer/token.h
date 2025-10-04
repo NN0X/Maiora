@@ -84,6 +84,9 @@ enum Token
         TOK_OP_QUOTE,           // '
         TOK_OP_DQUOTE,          // "
 
+        // comma
+        TOK_OP_COMMA,           // ,
+
         // --- TYPES ---
 
         TOK_TYPE_NONE,          // none
@@ -113,6 +116,7 @@ enum Token
         // --- STRINGS ---
 
         TOK_STR_STUB,           // placeholder for tokens that can be considered strings before lexer string filtering phase
+        TOK_SPACE_STUB,         // placeholder for spaces
 
         // --- LITERALS ---
 

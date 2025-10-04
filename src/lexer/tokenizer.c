@@ -7,9 +7,11 @@
 #include "lexer.h"
 #include "loader.h"
 
+// TODO: fix so tokens are in correct order
+
 int getTokenMatch(char *str)
 {
-        for (uint64_t i; i < TOK_META_STR_BEGIN; i++)
+        for (uint64_t i = 0; i < TOK_META_STR_BEGIN; i++)
         {
                 if (strcmp(str, TOKENS[i]) == 0)
                 {
@@ -17,6 +19,49 @@ int getTokenMatch(char *str)
                 }
         }
         return -1;
+}
+
+int getLongestTokenFit(char** fit, char** antifit, LTok_t* token, char* word, uint64_t offset)
+{
+        uint64_t wordLen = strlen(word);
+        if (offset >= wordLen)
+        {
+                return 1;
+        }
+        uint64_t fitLen = wordLen - offset;
+        memcpy(*fit, word + offset, fitLen);
+        (*fit)[fitLen] = '\0';
+        (*antifit)[0] = '\0';
+
+        // --- DEBUG INFO ---
+        //printf("Word: %s\n", word);
+        // ------------------
+
+        while (fitLen > 0)
+        {
+                int tokenMatch = getTokenMatch(*fit);
+                if (tokenMatch >= 0)
+                {
+                        token->data = (char*)malloc(fitLen + 1);
+                        memcpy(token->data, *fit, fitLen);
+                        token->data[fitLen] = '\0';
+                        token->token = tokenMatch;
+                        token->len = fitLen;
+                        break;
+                }
+                memcpy(*fit, word + offset, fitLen);
+                fitLen--;
+                (*fit)[fitLen] = '\0';
+                memcpy(*antifit, word + offset + fitLen, wordLen - offset - fitLen + 1);
+                (*antifit)[wordLen - offset - fitLen] = '\0';
+
+                // --- DEBUG INFO ---
+                //printf("Fit: %s\n", *fit);
+                //printf("Antifit: %s\n", *antifit);
+                // ------------------
+        }
+
+        return 0;
 }
 
 int getFirstLongestTokenFit(char** fit, char** antifit, LTok_t* token, char* word)
@@ -43,28 +88,36 @@ int getFirstLongestTokenFit(char** fit, char** antifit, LTok_t* token, char* wor
         // output: fit = "\"", antifit = "", token = "TOK_OP_DQUOTE"
         // result: [TOK_OP_DQUOTE, TOK_STR_STUB, TOK_OP_DQUOTE]
 
-        uint64_t wordLen = strlen(word);
-        uint64_t fitLen = wordLen;
-        memcpy(*fit, word, wordLen + 1);
-        (*fit)[wordLen] = '\0';
-        (*antifit)[0] = '\0';
-
-        while (fitLen > 0)
+        uint64_t offset = 0;
+        if (getLongestTokenFit(fit, antifit, token, word, offset) != 0)
         {
-                int tokenMatch = getTokenMatch(*fit);
-                if (tokenMatch > 0)
-                {
-                    // TODO: create token TOKENS[tokenMatch]
-                    break;
-                }
-                (*fit)[fitLen - 1] = '\0';
-                fitLen--;
-                // TODO: update antifit
+                fprintf(stderr, "getLongestTokenFit failed for word %s\n", word);
+                return 1;
         }
 
-        if (fitLen == 0)
+        while (strlen(*fit) == 0 && offset < strlen(word) - 1)
         {
-                // TODO: antifit is TOK_STR_STUB
+                offset++;
+                if (getLongestTokenFit(fit, antifit, token, word, offset) != 0)
+                {
+                        fprintf(stderr, "getLongestTokenFit failed for word %s\n", word);
+                        return 1;
+                }
+        }
+
+        if (strlen(*fit) == 0)
+        {
+                // --- DEBUG INFO ---
+                //printf("No fit found for word: %s\n", word);
+                // ------------------
+
+                token->token = TOK_STR_STUB;
+                token->data = (char*)malloc(strlen(word) + 1);
+                memcpy(token->data, word, strlen(word) + 1);
+                token->len = strlen(word);
+                memcpy(*fit, word, strlen(word) + 1);
+                (*fit)[strlen(word)] = '\0';
+                (*antifit)[0] = '\0';
         }
 
         return 0;
@@ -80,15 +133,15 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
         }
 
         // --- DEBUG INFO ---
-        printf("Generating tokens from: ");
-        fwrite(statement, 1, len, stdout);
-        printf("\n");
+        //printf("Generating tokens from: ");
+        //fwrite(statement, 1, len, stdout);
+        //printf("\n");
         // ------------------
 
         uint64_t* spacePositions = (uint64_t*)malloc(1024*sizeof(uint64_t));
         if (spacePositions == NULL)
         {
-                fprintf(stderr, "Memory allocation failed for spacePositions");
+                fprintf(stderr, "Memory allocation failed for spacePositions\n");
                 return 1;
         }
 
@@ -97,6 +150,11 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
         {
                 if (statement[i] == ' ')
                 {
+                        LTok_t spaceToken;
+                        spaceToken.token = TOK_SPACE_STUB;
+                        tokens[*num] = spaceToken;
+                        (*num)++;
+
                         spacePositions[numSpaces] = i;
                         numSpaces++;
                 }
@@ -105,7 +163,7 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
         char** words = (char**)malloc(MAX_STATEMENT_LEN * sizeof(char*));
         if (words == NULL)
         {
-                fprintf(stderr, "Memory allocation failed for words");
+                fprintf(stderr, "Memory allocation failed for words\n");
                 return 1;
         }
 
@@ -115,17 +173,17 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
                 uint64_t wordLen = 0;
                 if (numSpaces == 0)
                 {
-                        wordLen = len + 1;
+                        wordLen = len;
                 }
                 else
                 {
-                        wordLen = spacePositions[0] + 1;
+                        wordLen = spacePositions[0];
                 }
 
                 char* word = (char*)malloc(wordLen + 1);
                 if (word == NULL)
                 {
-                        fprintf(stderr, "Memory allocation failed for word");
+                        fprintf(stderr, "Memory allocation failed for word\n");
                         return 1;
                 }
 
@@ -141,27 +199,27 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
                 uint64_t wordLen = 0;
                 if (i + 1 == numSpaces)
                 {
-                        wordLen = len - spacePositions[i];
+                        wordLen = len - spacePositions[i] - 1;
                 }
                 else
                 {
-                        wordLen = spacePositions[i + 1] - spacePositions[i];
+                        wordLen = spacePositions[i + 1] - spacePositions[i] - 1;
                 }
 
                 if (wordLen > MAX_STATEMENT_LEN)
                 {
-                        fprintf(stderr, "Word length larger than MAX_STATEMENT_LEN");
+                        fprintf(stderr, "Word length larger than MAX_STATEMENT_LEN\n");
                         return 1;
                 }
-                else if (wordLen < 2)
+                else if (wordLen == 0)
                 {
                         continue;
                 }
 
-                char* word = (char*)malloc(wordLen);
+                char* word = (char*)malloc(wordLen + 1);
                 if (word == NULL)
                 {
-                        fprintf(stderr, "Memory allocation failed for word");
+                        fprintf(stderr, "Memory allocation failed for word\n");
                         return 1;
                 }
 
@@ -175,50 +233,52 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
         // INFO: ex. statement: "sint32 var = 5s" -> tokens = [TOK_TYPE_SINT32, TOK_ID_VARIABLE, TOK_OP_ASSIGN, TOK_LIT_SINT32]
 
         uint64_t numWordsProcessed = 0;
-        for (uint64_t i = 0; i < numWords; i++)
+        uint64_t i = 0;
+        while (numWordsProcessed < numWords)
         {
                 if (strlen(words[i]) == 0)
                 {
+                        i++;
+                        if (i == numWords) i = 0;
                         continue;
                 }
 
                 char* fit = (char*)malloc(MAX_STATEMENT_LEN);
                 if (fit == NULL)
                 {
-                        fprintf(stderr, "Memory allocation failed for fit");
+                        fprintf(stderr, "Memory allocation failed for fit\n");
                         return 1;
                 }
 
                 char* antifit = (char*)malloc(MAX_STATEMENT_LEN);
                 if (antifit == NULL)
                 {
-                        fprintf(stderr, "Memory allocation failed for antifit");
+                        fprintf(stderr, "Memory allocation failed for antifit\n");
                         return 1;
                 }
 
                 LTok_t token;
                 if (getFirstLongestTokenFit(&fit, &antifit, &token, words[i]) == 1)
                 {
-                        fprintf(stderr, "getFirstLongestTokenFit failed for word %s", words[i]);
+                        fprintf(stderr, "getFirstLongestTokenFit failed for word %s\n", words[i]);
                         return 1;
                 }
-
-                uint64_t fitLen = strlen(fit);
-                uint64_t wordLen = strlen(words[i]);
 
                 free(words[i]);
                 words[i] = antifit;
 
-                if (fitLen == wordLen)
+                if (strlen(words[i]) == 0)
                 {
                         numWordsProcessed++;
                 }
-                else
-                {
-                        words[i] = antifit;
-                }
 
                 // TODO: take care of token
+
+                tokens[*num] = token;
+                (*num)++;
+
+                i++;
+                if (i == numWords) i = 0;
         }
 
         // TODO: string filtering phase (take care of TOK_STR_STUB that are actual strings)
@@ -232,6 +292,7 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
                 free(words[i]);
         }
         free(words);
+        free(spacePositions);
 
         return 0;
 }
@@ -243,7 +304,7 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
         metadata->numTokens = 0;
         if (lexerData->tokens == NULL)
         {
-                fprintf(stderr, "Memory allocation failed for tokens");
+                fprintf(stderr, "Memory allocation failed for tokens\n");
                 return 1;
         }
 
@@ -269,7 +330,7 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                         pos++;
                         if (pos > MAX_STATEMENT_LEN)
                         {
-                                fprintf(stderr, "Maximum statement length reached.");
+                                fprintf(stderr, "Maximum statement length reached.\n");
                                 return 1;
                         }
                         continue;
@@ -300,19 +361,19 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                 //getchar();
                 // ------------------
 
-                char* tokenData = (char*)malloc(MAX_STATEMENT_LEN);
                 LTok_t* tokens = (LTok_t*)malloc(sizeof(LTok_t) * MAX_STATEMENT_LEN);
                 if (tokens == NULL)
                 {
-                    fprintf(stderr, "Memory allocation failed for tokens");
+                    fprintf(stderr, "Memory allocation failed for tokens\n");
                     return 1;
                 }
 
                 uint64_t numGenerated;
-                if (generateTokens(tokens, statement, pos, &numGenerated) == 1)
+                if (generateTokens(tokens, statement, pos, &numGenerated) != 0)
                 {
                     fprintf(stderr, "Failed to tokenize statement: ");
                     fwrite(statement, 1, pos, stderr);
+                    fprintf(stderr, "\n");
                     return 1;
                 }
 
@@ -321,8 +382,9 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                     lexerData->tokens[metadata->numTokens] = tokens[i];
                     metadata->numTokens++;
                 }
+
+                memset(statement, 0, MAX_STATEMENT_LEN);
                 pos = 0;
-                free(tokenData);
         }
 
         free(statement);

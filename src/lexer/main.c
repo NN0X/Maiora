@@ -42,6 +42,18 @@ int main(int argc, char* argv[])
                 return 1;
         }
 
+        // -- DEBUG INFO ---
+        printf("Generated %lu tokens:\n", metadata.numTokens);
+        for (uint64_t i = 0; i < metadata.numTokens; i++)
+        {
+                LTok_t token = lexerData.tokens[i];
+                if (token.token < TOK_STR_STUB)
+                    printf("Token %lu: | %s\n", i, TOKENS[token.token]);
+                else if (token.token != TOK_SPACE_STUB)
+                    printf("Token %lu: | %s\n", i, token.data);
+        }
+        // ----------------
+
         free(src);
 
         return 0;
