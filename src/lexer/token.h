@@ -38,8 +38,6 @@ enum Token
 
         // --- OPERATORS ---
 
-        TOK_META_OP_BEGIN,
-
         // comparators
         TOK_OP_EQUALS,          // ==
         TOK_OP_LESS,            // <
@@ -88,8 +86,6 @@ enum Token
 
         // --- TYPES ---
 
-        TOK_META_TYPE_BEGIN,
-
         TOK_TYPE_NONE,          // none
         TOK_TYPE_BOOL,          // bool
 
@@ -118,10 +114,7 @@ enum Token
 
         TOK_STR_STUB,           // placeholder for tokens that can be considered strings before lexer string filtering phase
 
-
         // --- LITERALS ---
-
-        TOK_META_LIT_BEGIN,
 
         TOK_LIT_STUB,           // placeholder for literals before lexer literation phase
 
@@ -145,8 +138,6 @@ enum Token
 
         // --- IDENTIFIERS ---
 
-        TOK_META_ID_BEGIN,
-
         TOK_ID_STUB,            // placeholder for ids before lexer id phase
 
         // functions
@@ -164,6 +155,8 @@ enum Token
 
         TOK_META_NUM,
 };
+
+#define TOK_META_STR_BEGIN TOK_STR_STUB
 
 extern const char* TOKENS[TOK_META_NUM];
 

@@ -7,7 +7,18 @@
 #include "lexer.h"
 #include "loader.h"
 
-// INFO: has to begin at word[0]
+int getTokenMatch(char *str)
+{
+        for (uint64_t i; i < TOK_META_STR_BEGIN; i++)
+        {
+                if (strcmp(str, TOKENS[i]) == 0)
+                {
+                        return i;
+                }
+        }
+        return -1;
+}
+
 int getFirstLongestTokenFit(char** fit, char** antifit, LTok_t* token, char* word)
 {
         // INFO: example 1
@@ -32,6 +43,29 @@ int getFirstLongestTokenFit(char** fit, char** antifit, LTok_t* token, char* wor
         // output: fit = "\"", antifit = "", token = "TOK_OP_DQUOTE"
         // result: [TOK_OP_DQUOTE, TOK_STR_STUB, TOK_OP_DQUOTE]
 
+        uint64_t wordLen = strlen(word);
+        uint64_t fitLen = wordLen;
+        memcpy(*fit, word, wordLen + 1);
+        (*fit)[wordLen] = '\0';
+        (*antifit)[0] = '\0';
+
+        while (fitLen > 0)
+        {
+                int tokenMatch = getTokenMatch(*fit);
+                if (tokenMatch > 0)
+                {
+                    // TODO: create token TOKENS[tokenMatch]
+                    break;
+                }
+                (*fit)[fitLen - 1] = '\0';
+                fitLen--;
+                // TODO: update antifit
+        }
+
+        if (fitLen == 0)
+        {
+                // TODO: antifit is TOK_STR_STUB
+        }
 
         return 0;
 }
@@ -187,11 +221,11 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
                 // TODO: take care of token
         }
 
-        // TODO: string filtering phase
+        // TODO: string filtering phase (take care of TOK_STR_STUB that are actual strings)
 
-        // TODO: literation phase
+        // TODO: literation phase (take care of literals)
 
-        // TODO: id phase
+        // TODO: id phase (take care of ids)
 
         for (uint64_t i = 0; i < numWords; i++)
         {
