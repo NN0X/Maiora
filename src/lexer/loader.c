@@ -21,8 +21,8 @@ int openSourceFile(FILE** file, char* filename, LMeta_t* metadata)
                 return 1;
         }
 
-        char extension[4] = {filename[nameSize - 4], filename[nameSize - 3],
-                             filename[nameSize - 2], filename[nameSize - 1]};
+        char extension[5] = {filename[nameSize - 4], filename[nameSize - 3],
+                             filename[nameSize - 2], filename[nameSize - 1], '\0'};
 
         if (strcmp(extension, ".mai") != 0)
         {
@@ -37,14 +37,13 @@ int openSourceFile(FILE** file, char* filename, LMeta_t* metadata)
                 return 1;
         }
 
-        strncpy(srcname, filename, MAX_FILE_NAME_LEN);
-        srcname[MAX_FILE_NAME_LEN] = '\0';
-        if (strcmp(srcname, filename) != 0)
+
+        if (nameSize >= MAX_FILE_NAME_LEN)
         {
-                fprintf(stderr, "Filename of: %s is too long or strncpy failed.\n", filename);
-                free(srcname);
+                fprintf(stderr, "Filename too long: %s\n", filename);
                 return 1;
         }
+        strcpy(srcname, filename);
 
         *file = fopen(srcname, "r");
         if (*file == NULL)
@@ -62,14 +61,8 @@ int openSourceFile(FILE** file, char* filename, LMeta_t* metadata)
                 return 1;
         }
 
-        strncpy(metadata->filename, srcname, nameSize);
+        strcpy(metadata->filename, srcname);
         metadata->filename[nameSize] = '\0';
-        if (strcmp(metadata->filename, srcname) != 0)
-        {
-                fprintf(stderr, "strncpy failed on metadata->filename.\n");
-                free(srcname);
-                return 1;
-        }
 
         free(srcname);
         uint64_t currLine = 1;
@@ -88,7 +81,7 @@ int loadSourceFile(char** src, FILE* file, LMeta_t* metadata)
                 return 1;
         }
 
-        *src = (char*)malloc(fileSize);
+        *src = (char*)malloc(fileSize + 1);
         if (*src == NULL)
         {
                 fprintf(stderr, "Memory allocation failed for data.\n");
@@ -96,6 +89,7 @@ int loadSourceFile(char** src, FILE* file, LMeta_t* metadata)
         }
 
         uint64_t size = fread(*src, 1, fileSize, file);
+        (*src)[fileSize] = '\0';
         if (size != fileSize)
         {
                 fprintf(stderr, "Wrong amount of data read. Got: %lu Expected: %lu\n", size, fileSize);
