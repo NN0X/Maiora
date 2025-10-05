@@ -46,6 +46,7 @@ int getLongestTokenFit(char** fit, char** antifit, LTok_t* token, char* word, ui
                         memcpy(token->data, *fit, fitLen);
                         token->data[fitLen] = '\0';
                         token->token = tokenMatch;
+                        token->pos = offset; // TODO: fix pos
                         token->len = fitLen;
                         break;
                 }
@@ -112,6 +113,7 @@ int getFirstLongestTokenFit(char** fit, char** antifit, LTok_t* token, char* wor
                 // ------------------
 
                 token->token = TOK_STR_STUB;
+                token->pos = 0; // TODO: fix pos
                 token->data = (char*)malloc(strlen(word) + 1);
                 memcpy(token->data, word, strlen(word) + 1);
                 token->len = strlen(word);
@@ -379,6 +381,7 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
 
                 for (uint64_t i = 0; i < numGenerated; i++)
                 {
+                    tokens[i].line = line;
                     lexerData->tokens[metadata->numTokens] = tokens[i];
                     metadata->numTokens++;
                 }
