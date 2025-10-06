@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
                 if (token.token < TOK_STR_STUB)
                     printf("Token %lu: | %s | line: %lu | pos: %lu\n", i, TOKENS[token.token], token.line, token.pos);
                 else if (token.token != TOK_SPACE_STUB)
-                    printf("Token %lu: | %s | line: %lu | pos: %lu\n", i, token.data, token.line, token.pos);
+                    printf("STR_STUB %lu: | %s | line: %lu | pos: %lu\n", i, token.data, token.line, token.pos);
         }
         // ----------------
 
