@@ -8,6 +8,8 @@
 #include "loader.h"
 
 // TODO: antifit should be able to split into multiple words
+// TODO: fix position tracking
+// TODO: map statement number to line number for error reporting
 
 int sortTokensByPos(LTok_t* tokens, uint64_t low, uint64_t high)
 {
