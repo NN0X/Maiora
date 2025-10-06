@@ -13,7 +13,7 @@ public none foo1(address sint64 numbers)
 
 entry sint32 main(none)
 {       IO::io(none);
-        address sint64 numbers = heap 10*[0s];
+        address sint64 numbers = heap 10*[9s];
         numbers[0] = 42s;
 
         reference sint64 numRef = ref numbers;

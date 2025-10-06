@@ -7,8 +7,6 @@
 #include "lexer.h"
 #include "loader.h"
 
-// TODO: antifit should be able to split into multiple words
-// TODO: fix position tracking
 // TODO: map statement number to line number for error reporting
 
 int sortTokensByPos(LTok_t* tokens, uint64_t low, uint64_t high)
@@ -48,7 +46,7 @@ int getTokenMatch(char *str)
         return -1;
 }
 
-int getLongestTokenFit(char** fit, char** antifit, LTok_t* token, char* word, uint64_t offset, uint64_t wordPos)
+int getLongestTokenFit(char** fit, char** beforefit, char** afterfit, LTok_t* token, char* word, uint64_t offset, uint64_t wordPos)
 {
         uint64_t wordLen = strlen(word);
         if (offset >= wordLen)
@@ -56,21 +54,10 @@ int getLongestTokenFit(char** fit, char** antifit, LTok_t* token, char* word, ui
                 return 1;
         }
         uint64_t fitLen = wordLen - offset;
-        *fit = (char*)malloc(MAX_STATEMENT_LEN);
-        if (*fit == NULL)
-        {
-                fprintf(stderr, "Memory allocation failed for fit\n");
-                return 1;
-        }
         memcpy(*fit, word + offset, fitLen);
         (*fit)[fitLen] = '\0';
-        *antifit = (char*)malloc(MAX_STATEMENT_LEN);
-        if (*antifit == NULL)
-        {
-                fprintf(stderr, "Memory allocation failed for antifit\n");
-                return 1;
-        }
-        (*antifit)[0] = '\0';
+        (*beforefit)[0] = '\0';
+        (*afterfit)[0] = '\0';
 
         // --- DEBUG INFO ---
         //printf("Word: %s\n", word);
@@ -88,14 +75,26 @@ int getLongestTokenFit(char** fit, char** antifit, LTok_t* token, char* word, ui
                         token->pos = wordPos + offset;
                         token->len = fitLen;
 
-                        // TODO: take care of antifit
+                        if (offset > 0)
+                        {
+                                memcpy(*beforefit, word, offset);
+                                (*beforefit)[offset] = '\0';
+                        }
+                        if (offset + fitLen < wordLen)
+                        {
+                                uint64_t afterfitLen = wordLen - (offset + fitLen);
+                                memcpy(*afterfit, word + offset + fitLen, afterfitLen);
+                                (*afterfit)[afterfitLen] = '\0';
+                        }
+
+                        // --- DEBUG INFO ---
+                        //printf("Fit: %s\n", *fit);
+                        //printf("Beforefit: %s\n", *beforefit);
+                        //printf("Afterfit: %s\n", *afterfit);
+                        // ------------------
+
                         return 0;
                 }
-
-                // --- DEBUG INFO ---
-                //printf("Fit: %s\n", *fit);
-                //printf("Antifit: %s\n", *antifit);
-                // ------------------
 
                 fitLen--;
                 memcpy(*fit, word + offset, fitLen);
@@ -105,10 +104,10 @@ int getLongestTokenFit(char** fit, char** antifit, LTok_t* token, char* word, ui
         return 0;
 }
 
-int getFirstLongestTokenFit(char** fit, char** antifit, LTok_t* token, char* word, uint64_t wordPos)
+int getFirstLongestTokenFit(char** fit, char** beforefit, char** afterfit, LTok_t* token, char* word, uint64_t wordPos)
 {
         uint64_t offset = 0;
-        if (getLongestTokenFit(fit, antifit, token, word, offset, wordPos) != 0)
+        if (getLongestTokenFit(fit, beforefit, afterfit, token, word, offset, wordPos) != 0)
         {
                 fprintf(stderr, "getLongestTokenFit failed for word %s\n", word);
                 return 1;
@@ -117,7 +116,7 @@ int getFirstLongestTokenFit(char** fit, char** antifit, LTok_t* token, char* wor
         while (strlen(*fit) == 0 && offset < strlen(word) - 1)
         {
                 offset++;
-                if (getLongestTokenFit(fit, antifit, token, word, offset, wordPos) != 0)
+                if (getLongestTokenFit(fit, beforefit, afterfit, token, word, offset, wordPos) != 0)
                 {
                         fprintf(stderr, "getLongestTokenFit failed for word %s\n", word);
                         return 1;
@@ -127,7 +126,7 @@ int getFirstLongestTokenFit(char** fit, char** antifit, LTok_t* token, char* wor
         if (strlen(*fit) == 0)
         {
                 // --- DEBUG INFO ---
-                //printf("No fit found for word: %s\n", word);
+                printf("No fit found for word: %s\n", word);
                 // ------------------
 
                 token->token = TOK_STR_STUB;
@@ -137,7 +136,8 @@ int getFirstLongestTokenFit(char** fit, char** antifit, LTok_t* token, char* wor
                 token->len = strlen(word);
                 memcpy(*fit, word, strlen(word) + 1);
                 (*fit)[strlen(word)] = '\0';
-                (*antifit)[0] = '\0';
+                (*beforefit)[0] = '\0';
+                (*afterfit)[0] = '\0';
         }
 
         return 0;
@@ -291,23 +291,55 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num,
                         return 1;
                 }
 
-                char* antifit = (char*)malloc(MAX_STATEMENT_LEN);
-                if (antifit == NULL)
+                char* beforefit = (char*)malloc(MAX_STATEMENT_LEN);
+                if (beforefit == NULL)
                 {
-                        fprintf(stderr, "Memory allocation failed for antifit\n");
+                        fprintf(stderr, "Memory allocation failed for beforefit\n");
                         return 1;
                 }
+                beforefit[0] = '\0';
+                char* afterfit = (char*)malloc(MAX_STATEMENT_LEN);
+                if (afterfit == NULL)
+                {
+                        fprintf(stderr, "Memory allocation failed for afterfit\n");
+                        return 1;
+                }
+                afterfit[0] = '\0';
 
                 LTok_t token;
-                if (getFirstLongestTokenFit(&fit, &antifit, &token, words[i], wordPositions[i]) != 0)
+                if (getFirstLongestTokenFit(&fit, &beforefit, &afterfit, &token, words[i], wordPositions[i]) != 0)
                 {
                         fprintf(stderr, "getFirstLongestTokenFit failed for word %s\n", words[i]);
                         return 1;
                 }
 
                 free(words[i]);
-                words[i] = antifit;
-                wordPositions[i] += strlen(fit);
+                words[i] = (char*)malloc(MAX_STATEMENT_LEN);
+
+                uint64_t beforeLen = strlen(beforefit);
+                if (strlen(beforefit) > 0 && strlen(afterfit) > 0)
+                {
+                        numWords++;
+                        words[numWords - 1] = (char*)malloc(MAX_STATEMENT_LEN);
+                        memcpy(words[numWords - 1], beforefit, strlen(beforefit) + 1);
+                        wordPositions[numWords - 1] = wordPositions[i];
+
+                        memcpy(words[i], afterfit, strlen(afterfit) + 1);
+                        wordPositions[i] += strlen(fit) + beforeLen;
+                }
+                else if (strlen(beforefit) == 0 && strlen(afterfit) > 0)
+                {
+                        memcpy(words[i], afterfit, strlen(afterfit) + 1);
+                        wordPositions[i] += strlen(fit) + beforeLen;
+                }
+                else if (strlen(beforefit) > 0 && strlen(afterfit) == 0)
+                {
+                        memcpy(words[i], beforefit, strlen(beforefit) + 1);
+                }
+                else
+                {
+                        words[i][0] = '\0';
+                }
 
                 if (strlen(words[i]) == 0)
                 {
@@ -322,11 +354,11 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num,
                 if (i == numWords) i = 0;
         }
 
-        //if (sortTokensByPos(tokens, 0, *num - 1) != 0)
-        //{
-        //        fprintf(stderr, "sortTokensByPos failed\n");
-        //        return 1;
-        //}
+        if (sortTokensByPos(tokens, 0, *num - 1) != 0)
+        {
+                fprintf(stderr, "sortTokensByPos failed\n");
+                return 1;
+        }
 
         // TODO: string filtering phase (take care of TOK_STR_STUB that are actual strings)
 
