@@ -7,7 +7,7 @@
 #include "lexer.h"
 #include "loader.h"
 
-// TODO: map statement number to line number for error reporting
+// TODO: fix token.pos to be position in line, not in statement
 
 int sortTokensByPos(LTok_t* tokens, uint64_t low, uint64_t high)
 {
@@ -467,8 +467,6 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
 
                 for (uint64_t j = 0; j < numGenerated; j++)
                 {
-                    // TODO: convert token->pos from position in statement to position in line
-
                     lexerData->tokens[metadata->numTokens] = tokens[j];
                     metadata->numTokens++;
                 }
