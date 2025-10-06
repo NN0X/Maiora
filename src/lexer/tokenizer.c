@@ -143,7 +143,7 @@ int getFirstLongestTokenFit(char** fit, char** beforefit, char** afterfit, LTok_
         return 0;
 }
 
-int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num, uint64_t line, uint64_t statementPos)
+int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num, uint64_t line)
 {
         *num = 0;
 
@@ -263,15 +263,13 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num,
         {
                 if (i == 0)
                 {
-                        wordPositions[i] = statementPos;
+                        wordPositions[i] = 0;
                 }
                 else
                 {
                         wordPositions[i] = wordPositions[i - 1] + strlen(words[i - 1]) + 1;
                 }
         }
-
-        // INFO: ex. statement: "sint32 var = 5s" -> tokens = [TOK_TYPE_SINT32, TOK_ID_VARIABLE, TOK_OP_ASSIGN, TOK_LIT_SINT32]
 
         uint64_t numWordsProcessed = 0;
         uint64_t i = 0;
@@ -395,6 +393,11 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
         uint64_t statementNum = 0;
         uint64_t line = 1;
         char* statement = (char*)calloc(MAX_STATEMENT_LEN + 1, 1);
+        if (statement == NULL)
+        {
+                fprintf(stderr, "Memory allocation failed for statement\n");
+                return 1;
+        }
 
         uint64_t pos = 0;
         uint64_t column = 0;
@@ -404,12 +407,14 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                 if (c == '\n')
                 {
                         line++;
+                        column = 0;
                         continue;
                 }
                 else if (c != ';' && c != '{' && c != '}')
                 {
                         statement[pos] = c;
                         pos++;
+                        column++;
                         if (pos > MAX_STATEMENT_LEN)
                         {
                                 fprintf(stderr, "Maximum statement length reached.\n");
@@ -419,6 +424,7 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                 }
                 else if (c == '{' || c == '}')
                 {
+                        column++;
                         LTok_t token;
                         if (c == '{')
                         {
@@ -429,7 +435,7 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                                 token.token = TOK_OP_RCURLY;
                         }
                         token.line = line;
-                        token.pos = pos;
+                        token.pos = column;
 
                         lexerData->tokens[metadata->numTokens] = token;
                         metadata->numTokens++;
@@ -451,7 +457,7 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                 }
 
                 uint64_t numGenerated;
-                if (generateTokens(tokens, statement, pos, &numGenerated, line, pos - strlen(statement)) != 0)
+                if (generateTokens(tokens, statement, pos, &numGenerated, line) != 0)
                 {
                     fprintf(stderr, "Failed to tokenize statement: ");
                     fwrite(statement, 1, pos, stderr);
@@ -459,9 +465,11 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                     return 1;
                 }
 
-                for (uint64_t i = 0; i < numGenerated; i++)
+                for (uint64_t j = 0; j < numGenerated; j++)
                 {
-                    lexerData->tokens[metadata->numTokens] = tokens[i];
+                    // TODO: convert token->pos from position in statement to position in line
+
+                    lexerData->tokens[metadata->numTokens] = tokens[j];
                     metadata->numTokens++;
                 }
 
