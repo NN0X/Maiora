@@ -7,8 +7,6 @@
 #include "lexer.h"
 #include "loader.h"
 
-// TODO: fix token.pos to be position in line, not in statement
-
 int sortTokensByPos(LTok_t* tokens, uint64_t low, uint64_t high)
 {
         if (low >= high) return 0;
@@ -126,7 +124,7 @@ int getFirstLongestTokenFit(char** fit, char** beforefit, char** afterfit, LTok_
         if (strlen(*fit) == 0)
         {
                 // --- DEBUG INFO ---
-                printf("No fit found for word: %s\n", word);
+                //printf("No fit found for word: %s\n", word);
                 // ------------------
 
                 token->token = TOK_STR_STUB;
@@ -143,7 +141,7 @@ int getFirstLongestTokenFit(char** fit, char** beforefit, char** afterfit, LTok_
         return 0;
 }
 
-int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num, uint64_t line)
+int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
 {
         *num = 0;
 
@@ -166,6 +164,7 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num,
         }
 
         uint64_t numSpaces = 0;
+        uint64_t firstNonSpace = len;
         for (uint64_t i = 0; i < len; i++)
         {
                 if (statement[i] == ' ')
@@ -173,12 +172,15 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num,
                         LTok_t spaceToken;
                         spaceToken.token = TOK_SPACE_STUB;
                         spaceToken.pos = i;
-                        spaceToken.line = line;
                         tokens[*num] = spaceToken;
                         (*num)++;
 
                         spacePositions[numSpaces] = i;
                         numSpaces++;
+                }
+                else if (i < firstNonSpace)
+                {
+                        firstNonSpace = i;
                 }
         }
 
@@ -263,7 +265,7 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num,
         {
                 if (i == 0)
                 {
-                        wordPositions[i] = 0;
+                        wordPositions[i] = firstNonSpace;
                 }
                 else
                 {
@@ -344,7 +346,6 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num,
                         numWordsProcessed++;
                 }
 
-                token.line = line;
                 tokens[*num] = token;
                 (*num)++;
 
@@ -388,7 +389,6 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
 
 
         // INFO: statement is a line of code between semicolons or before curlies
-        // TODO: add mapping from statement number to line number for error reporting
 
         uint64_t statementNum = 0;
         uint64_t line = 1;
@@ -396,6 +396,20 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
         if (statement == NULL)
         {
                 fprintf(stderr, "Memory allocation failed for statement\n");
+                return 1;
+        }
+
+        uint64_t *statementPosToColumn = (uint64_t*)malloc(sizeof(uint64_t) * MAX_STATEMENT_LEN);
+        if (statementPosToColumn == NULL)
+        {
+                fprintf(stderr, "Memory allocation failed for statementPosToColumn\n");
+                return 1;
+        }
+
+        uint64_t *statementPosToLine = (uint64_t*)malloc(sizeof(uint64_t) * MAX_STATEMENT_LEN);
+        if (statementPosToLine == NULL)
+        {
+                fprintf(stderr, "Memory allocation failed for statementPosToLine\n");
                 return 1;
         }
 
@@ -413,6 +427,8 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                 else if (c != ';' && c != '{' && c != '}')
                 {
                         statement[pos] = c;
+                        statementPosToColumn[pos] = column;
+                        statementPosToLine[pos] = line;
                         pos++;
                         column++;
                         if (pos > MAX_STATEMENT_LEN)
@@ -422,7 +438,7 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                         }
                         continue;
                 }
-                else if (c == '{' || c == '}')
+                else if (c == '{' || c == '}' || c == ';')
                 {
                         column++;
                         LTok_t token;
@@ -430,9 +446,13 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                         {
                                 token.token = TOK_OP_LCURLY;
                         }
-                        else
+                        else if (c == '}')
                         {
                                 token.token = TOK_OP_RCURLY;
+                        }
+                        else
+                        {
+                                token.token = TOK_OP_SEMICOLON;
                         }
                         token.line = line;
                         token.pos = column;
@@ -457,7 +477,7 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                 }
 
                 uint64_t numGenerated;
-                if (generateTokens(tokens, statement, pos, &numGenerated, line) != 0)
+                if (generateTokens(tokens, statement, pos, &numGenerated) != 0)
                 {
                     fprintf(stderr, "Failed to tokenize statement: ");
                     fwrite(statement, 1, pos, stderr);
@@ -467,6 +487,9 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
 
                 for (uint64_t j = 0; j < numGenerated; j++)
                 {
+                    tokens[j].line = statementPosToLine[tokens[j].pos];
+                    tokens[j].pos = statementPosToColumn[tokens[j].pos] + 1;
+
                     lexerData->tokens[metadata->numTokens] = tokens[j];
                     metadata->numTokens++;
                 }

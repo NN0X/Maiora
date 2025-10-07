@@ -84,8 +84,9 @@ enum Token
         TOK_OP_QUOTE,           // '
         TOK_OP_DQUOTE,          // "
 
-        // comma
+        // comma and semicolon
         TOK_OP_COMMA,           // ,
+        TOK_OP_SEMICOLON,       // ;
 
         // --- TYPES ---
 

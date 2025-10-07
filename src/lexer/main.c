@@ -51,6 +51,8 @@ int main(int argc, char* argv[])
                     printf("Token %lu: | %s | line: %lu | pos: %lu\n", i, TOKENS[token.token], token.line, token.pos);
                 else if (token.token != TOK_SPACE_STUB)
                     printf("STR_STUB %lu: | %s | line: %lu | pos: %lu\n", i, token.data, token.line, token.pos);
+                else if (token.token == TOK_SPACE_STUB)
+                    printf("SPACE_STUB %lu: | line: %lu | pos: %lu\n", i, token.line, token.pos);
         }
         // ----------------
 

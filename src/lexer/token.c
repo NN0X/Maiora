@@ -67,6 +67,7 @@ const char* TOKENS[TOK_META_NUM] = {
         [TOK_OP_DQUOTE] = "\"",
 
         [TOK_OP_COMMA] = ",",
+        [TOK_OP_SEMICOLON] = ";",
 
         [TOK_TYPE_NONE] = "none",
         [TOK_TYPE_BOOL] = "bool",
