@@ -170,7 +170,7 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
                 if (statement[i] == ' ')
                 {
                         LTok_t spaceToken;
-                        spaceToken.token = TOK_SPACE_STUB;
+                        spaceToken.token = TOK_SPACE;
                         spaceToken.pos = i;
                         tokens[*num] = spaceToken;
                         (*num)++;
@@ -360,10 +360,24 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
         }
 
         // TODO: string filtering phase (take care of TOK_STR_STUB that are actual strings)
+        // INFO: "t{n}t" -> [TOK_OP_DQUOTE, TOK_LIT_CHAR, TOK_OP_LCURLY, TOK_STR_STUB, TOK_OP_RCURLY, TOK_LIT_CHAR, TOK_OP_DQUOTE]
+        // so important to know if token is between two TOK_OP_DQUOTE or TOK_OP_QUOTE
+        // or between TOK_OP_DQUOTE and TOK_OP_RCURLY
+        // or between TOK_OP_LCURLY and TOK_OP_DQUOTE
+        // this phase is stateful
 
-        // TODO: literation phase (take care of literals)
+        // TODO: literation phase (take care of literals that are not chars)
+        // INFO: sint64 var = 1s + 2 -> [TOK_TYPE_SINT64, TOK_STR_STUB, TOK_OP_ASSIGN, TOK_LIT_SINT, TOK_OP_ADD, TOK_LIT_INT]
+        // if is a number and ends with s, u, f, d -> TOK_LIT_SINT, TOK_LIT_UINT, TOK_LIT_FLOAT32, TOK_LIT_FLOAT64
+        // if is a number and contains . -> TOK_LIT_FLOAT
+        // if is a number and is 0 or starts with non-zero digit -> TOK_LIT_INT
+        // if is true or false -> TOK_LIT_BOOL
+        // this phase is stateless
 
         // TODO: id phase (take care of ids)
+        // INFO: sint64 var = 1s + 2 -> [TOK_TYPE_SINT64, TOK_ID, TOK_OP_ASSIGN, TOK_LIT_SINT, TOK_OP_ADD, TOK_LIT_INT]
+        // the rest
+        // this phase is stateless
 
         for (uint64_t i = 0; i < numWords; i++)
         {
