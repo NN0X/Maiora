@@ -67,6 +67,11 @@ int getLongestTokenFit(char** fit, char** beforefit, char** afterfit, LTok_t* to
                 if (tokenMatch >= 0)
                 {
                         token->data = (char*)malloc(fitLen + 1);
+                        if (token->data == NULL)
+                        {
+                                fprintf(stderr, "Memory allocation failed for token data\n");
+                                return 1;
+                        }
                         memcpy(token->data, *fit, fitLen);
                         token->data[fitLen] = '\0';
                         token->token = tokenMatch;
@@ -130,6 +135,11 @@ int getFirstLongestTokenFit(char** fit, char** beforefit, char** afterfit, LTok_
                 token->token = TOK_STR_STUB;
                 token->pos = wordPos;
                 token->data = (char*)malloc(strlen(word) + 1);
+                if (token->data == NULL)
+                {
+                        fprintf(stderr, "Memory allocation failed for token data\n");
+                        return 1;
+                }
                 memcpy(token->data, word, strlen(word) + 1);
                 token->len = strlen(word);
                 memcpy(*fit, word, strlen(word) + 1);
@@ -137,6 +147,41 @@ int getFirstLongestTokenFit(char** fit, char** beforefit, char** afterfit, LTok_
                 (*beforefit)[0] = '\0';
                 (*afterfit)[0] = '\0';
         }
+
+        return 0;
+}
+
+int filterStrings(LTok_t* tokens, uint64_t num)
+{
+        // TODO: string filtering phase (take care of TOK_STR_STUB that are actual strings - so TOK_LIT_CHAR)
+        // INFO: "t{n}t" -> [TOK_OP_DQUOTE, TOK_LIT_CHAR, TOK_OP_LCURLY, TOK_STR_STUB, TOK_OP_RCURLY, TOK_LIT_CHAR, TOK_OP_DQUOTE]
+        // so important to know if token is between two TOK_OP_DQUOTE or TOK_OP_QUOTE
+        // or between TOK_OP_DQUOTE and TOK_OP_RCURLY
+        // or between TOK_OP_LCURLY and TOK_OP_DQUOTE
+        // this phase is stateful
+
+        return 0;
+}
+
+int filterLiterals(LTok_t* tokens, uint64_t num)
+{
+        // TODO: literation phase (take care of literals that are not chars)
+        // INFO: sint64 var = 1s + 2 -> [TOK_TYPE_SINT64, TOK_STR_STUB, TOK_OP_ASSIGN, TOK_LIT_SINT, TOK_OP_ADD, TOK_LIT_INT]
+        // if is a number and ends with s, u, f, d -> TOK_LIT_SINT, TOK_LIT_UINT, TOK_LIT_FLOAT32, TOK_LIT_FLOAT64
+        // if is a number and contains . -> TOK_LIT_FLOAT
+        // if is a number and is 0 or starts with non-zero digit -> TOK_LIT_INT
+        // if is true or false -> TOK_LIT_BOOL
+        // this phase is stateless
+
+        return 0;
+}
+
+int filterIds(LTok_t* tokens, uint64_t num)
+{
+        // TODO: id phase (take care of ids)
+        // INFO: sint64 var = 1s + 2 -> [TOK_TYPE_SINT64, TOK_ID, TOK_OP_ASSIGN, TOK_LIT_SINT, TOK_OP_ADD, TOK_LIT_INT]
+        // the rest
+        // this phase is stateless
 
         return 0;
 }
@@ -172,6 +217,14 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
                         LTok_t spaceToken;
                         spaceToken.token = TOK_SPACE;
                         spaceToken.pos = i;
+                        spaceToken.len = 1;
+                        spaceToken.data = (char*)malloc(2);
+                        if (spaceToken.data == NULL)
+                        {
+                                fprintf(stderr, "Memory allocation failed for spaceToken data\n");
+                                return 1;
+                        }
+                        spaceToken.data[0] = ' ';
                         tokens[*num] = spaceToken;
                         (*num)++;
 
@@ -315,12 +368,22 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
 
                 free(words[i]);
                 words[i] = (char*)malloc(MAX_STATEMENT_LEN);
+                if (words[i] == NULL)
+                {
+                        fprintf(stderr, "Memory allocation failed for words[i]\n");
+                        return 1;
+                }
 
                 uint64_t beforeLen = strlen(beforefit);
                 if (strlen(beforefit) > 0 && strlen(afterfit) > 0)
                 {
                         numWords++;
                         words[numWords - 1] = (char*)malloc(MAX_STATEMENT_LEN);
+                        if (words[numWords - 1] == NULL)
+                        {
+                                fprintf(stderr, "Memory allocation failed for words[numWords - 1]\n");
+                                return 1;
+                        }
                         memcpy(words[numWords - 1], beforefit, strlen(beforefit) + 1);
                         wordPositions[numWords - 1] = wordPositions[i];
 
@@ -359,25 +422,21 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
                 return 1;
         }
 
-        // TODO: string filtering phase (take care of TOK_STR_STUB that are actual strings)
-        // INFO: "t{n}t" -> [TOK_OP_DQUOTE, TOK_LIT_CHAR, TOK_OP_LCURLY, TOK_STR_STUB, TOK_OP_RCURLY, TOK_LIT_CHAR, TOK_OP_DQUOTE]
-        // so important to know if token is between two TOK_OP_DQUOTE or TOK_OP_QUOTE
-        // or between TOK_OP_DQUOTE and TOK_OP_RCURLY
-        // or between TOK_OP_LCURLY and TOK_OP_DQUOTE
-        // this phase is stateful
-
-        // TODO: literation phase (take care of literals that are not chars)
-        // INFO: sint64 var = 1s + 2 -> [TOK_TYPE_SINT64, TOK_STR_STUB, TOK_OP_ASSIGN, TOK_LIT_SINT, TOK_OP_ADD, TOK_LIT_INT]
-        // if is a number and ends with s, u, f, d -> TOK_LIT_SINT, TOK_LIT_UINT, TOK_LIT_FLOAT32, TOK_LIT_FLOAT64
-        // if is a number and contains . -> TOK_LIT_FLOAT
-        // if is a number and is 0 or starts with non-zero digit -> TOK_LIT_INT
-        // if is true or false -> TOK_LIT_BOOL
-        // this phase is stateless
-
-        // TODO: id phase (take care of ids)
-        // INFO: sint64 var = 1s + 2 -> [TOK_TYPE_SINT64, TOK_ID, TOK_OP_ASSIGN, TOK_LIT_SINT, TOK_OP_ADD, TOK_LIT_INT]
-        // the rest
-        // this phase is stateless
+        if (filterStrings(tokens, *num) != 0)
+        {
+                fprintf(stderr, "filterStrings failed\n");
+                return 1;
+        }
+        if (filterLiterals(tokens, *num) != 0)
+        {
+                fprintf(stderr, "filterLiterals failed\n");
+                return 1;
+        }
+        if (filterIds(tokens, *num) != 0)
+        {
+                fprintf(stderr, "filterIds failed\n");
+                return 1;
+        }
 
         for (uint64_t i = 0; i < numWords; i++)
         {
@@ -394,13 +453,12 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
 {
         lexerData->metadata = *metadata;
         lexerData->tokens = (LTok_t*)malloc(sizeof(LTok_t) * metadata->fileSize);
-        metadata->numTokens = 0;
         if (lexerData->tokens == NULL)
         {
                 fprintf(stderr, "Memory allocation failed for tokens\n");
                 return 1;
         }
-
+        metadata->numTokens = 0;
 
         // INFO: statement is a line of code between semicolons or before curlies
 
@@ -459,15 +517,41 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                         if (c == '{')
                         {
                                 token.token = TOK_OP_LCURLY;
+                                token.data = (char*)malloc(2);
+                                if (token.data == NULL)
+                                {
+                                        fprintf(stderr, "Memory allocation failed for token data\n");
+                                        return 1;
+                                }
+                                token.data[0] = '{';
+                                token.data[1] = '\0';
+                                token.len = 1;
                         }
                         else if (c == '}')
                         {
                                 token.token = TOK_OP_RCURLY;
+                                token.data = (char*)malloc(2);
+                                if (token.data == NULL)
+                                {
+                                        fprintf(stderr, "Memory allocation failed for token data\n");
+                                        return 1;
+                                }
+                                token.data[0] = '}';
+                                token.data[1] = '\0';
                         }
                         else
                         {
                                 token.token = TOK_OP_SEMICOLON;
+                                token.data = (char*)malloc(2);
+                                if (token.data == NULL)
+                                {
+                                        fprintf(stderr, "Memory allocation failed for token data\n");
+                                        return 1;
+                                }
+                                token.data[0] = ';';
+                                token.data[1] = '\0';
                         }
+                        token.len = 1;
                         token.line = line;
                         token.pos = column;
 
