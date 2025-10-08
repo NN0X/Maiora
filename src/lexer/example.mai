@@ -1,0 +1,31 @@
+public none IO::print(ascii[] str, uint64 size) {} public none IO::io(none) {}
+
+public none foo1(reference sint64 numbers)
+{
+        IO::print(ascii"number at 0: {numbers[0]}");
+}
+
+public none foo1(address sint64 numbers)
+{
+        IO::print(ascii"number at 0: {numbers[0]}");
+        numbers[1] = 101s;
+}
+
+entry sint32 main(none)
+{       IO::io(none);
+        address sint64 numbers = heap 10*[9s];
+        numbers[0] = 42s;
+        float32 fl = 3.14f;
+        float64 dl = 2.71828d;
+        float32 ftest = 0.23;
+
+        reference sint64 numRef = ref numbers;
+        foo1(numRef);
+
+        foo1(ref numbers);
+
+        foo1(numbers);
+
+        return 0s;
+}
+

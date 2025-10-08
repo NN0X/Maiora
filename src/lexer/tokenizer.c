@@ -7,54 +7,61 @@
 #include "lexer.h"
 #include "loader.h"
 
-int sortTokensByPos(LTok_t* tokens, uint64_t low, uint64_t high)
-{
-        if (low >= high) return 0;
-        uint64_t pivot = tokens[high].pos;
-        uint64_t i = low;
-
-        for (uint64_t j = low; j < high; j++)
+int posCompare(const void* a, const void* b)
         {
-                if (tokens[j].pos <= pivot)
+                LTok_t* tokenA = (LTok_t*)a;
+                LTok_t* tokenB = (LTok_t*)b;
+                if (tokenA->pos < tokenB->pos)
                 {
-                        LTok_t temp = tokens[i];
-                        tokens[i] = tokens[j];
-                        tokens[j] = temp;
-                        i++;
+                        return -1;
+                }
+                else if (tokenA->pos > tokenB->pos)
+                {
+                        return 1;
+                }
+                else
+                {
+                        return 0;
                 }
         }
-        LTok_t temp = tokens[i];
-        tokens[i] = tokens[high];
-        tokens[high] = temp;
 
-        if (i > 0) sortTokensByPos(tokens, low, i - 1);
-        sortTokensByPos(tokens, i + 1, high);
-        return 0;
+void sortTokensByPos(LTok_t* tokens, uint64_t num)
+{
+        qsort(tokens, num, sizeof(LTok_t), posCompare);
 }
 
-int sortTokensByPosAndLine(LTok_t* tokens, uint64_t low, uint64_t high)
-{
-        if (low >= high) return 0;
-        uint64_t pivotLine = tokens[high].line;
-        uint64_t pivotPos = tokens[high].pos;
-        uint64_t i = low;
-        for (uint64_t j = low; j < high; j++)
+int posAndLineCompare(const void* a, const void* b)
         {
-                if (tokens[j].line < pivotLine || (tokens[j].line == pivotLine && tokens[j].pos <= pivotPos))
+                LTok_t* tokenA = (LTok_t*)a;
+                LTok_t* tokenB = (LTok_t*)b;
+                if (tokenA->line < tokenB->line)
                 {
-                        LTok_t temp = tokens[i];
-                        tokens[i] = tokens[j];
-                        tokens[j] = temp;
-                        i++;
+                        return -1;
+                }
+                else if (tokenA->line > tokenB->line)
+                {
+                        return 1;
+                }
+                else
+                {
+                        if (tokenA->pos < tokenB->pos)
+                        {
+                                return -1;
+                        }
+                        else if (tokenA->pos > tokenB->pos)
+                        {
+                                return 1;
+                        }
+                        else
+                        {
+                                return 0;
+                        }
                 }
         }
-        LTok_t temp = tokens[i];
-        tokens[i] = tokens[high];
-        tokens[high] = temp;
-        if (i > 0) sortTokensByPosAndLine(tokens, low, i - 1);
-        sortTokensByPosAndLine(tokens, i + 1, high);
 
-        return 0;
+void sortTokensByPosAndLine(LTok_t* tokens, uint64_t num)
+{
+        qsort(tokens, num, sizeof(LTok_t), posAndLineCompare);
 }
 
 int getTokenMatch(char *str)
@@ -101,7 +108,7 @@ int getLongestTokenFit(char** fit, char** beforefit, char** afterfit, LTok_t* to
                         token->data[fitLen] = '\0';
                         token->token = tokenMatch;
                         token->pos = wordPos + offset;
-                        token->len = fitLen;
+                        token->len = fitLen - 1;
 
                         if (offset > 0)
                         {
@@ -261,7 +268,7 @@ int filterStrings(LTok_t** tokens, uint64_t *num)
         *num += numNewTokens;
         free(newTokens);
 
-        sortTokensByPosAndLine(*tokens, 0, *num - 1);
+        sortTokensByPosAndLine(*tokens, *num);
 
         for (uint64_t i = *num - 1; i < *num; i--)
         {
@@ -279,7 +286,75 @@ int filterStrings(LTok_t** tokens, uint64_t *num)
         return 0;
 }
 
-int filterLiterals(LTok_t* tokens, uint64_t num)
+enum Type
+{
+        TYPE_UNDEFINED = 0,
+        TYPE_INT,
+        TYPE_FLOAT,
+        TYPE_SINT,
+        TYPE_UINT,
+        TYPE_FLOAT32,
+        TYPE_FLOAT64,
+        TYPE_BOOL
+};
+
+
+uint8_t inferLitType(LTok_t token)
+{
+        if (strcmp(token.data, "true") == 0 || strcmp(token.data, "false") == 0)
+        {
+                return TYPE_BOOL;
+        }
+
+        for (uint64_t i = 0; i < token.len - 1; i++)
+        {
+                if (token.data[i] < '0' || token.data[i] > '9')
+                {
+                        return TYPE_UNDEFINED;
+                }
+        }
+
+        if (token.len > 1 && token.data[token.len - 1] == 's')
+        {
+                return TYPE_SINT;
+        }
+        else if (token.len > 1 && token.data[token.len - 1] == 'u')
+        {
+                return TYPE_UINT;
+        }
+        else if (token.len > 1 && token.data[token.len - 1] == 'f')
+        {
+                return TYPE_FLOAT32;
+        }
+        else if (token.len > 1 && token.data[token.len - 1] == 'd')
+        {
+                return TYPE_FLOAT64;
+        }
+
+        return TYPE_INT;
+}
+
+uint8_t literalLookAhead(LTok_t* tokens, uint64_t num, uint64_t index)
+{
+        if (index + 2 >= num)
+        {
+                return TYPE_INT;
+        }
+
+        LTok_t nextToken = tokens[index + 1];
+        LTok_t nextNextToken = tokens[index + 2];
+
+        if (nextToken.token == TOK_OP_FROM && nextNextToken.token == TOK_STR_STUB)
+        {
+                return inferLitType(nextNextToken);
+        }
+        else
+        {
+                return TYPE_INT;
+        }
+}
+
+int filterLiterals(LTok_t** tokens, uint64_t *num)
 {
         // TODO: literation phase (take care of literals that are not chars)
         // INFO: sint64 var = 1s + 2 -> [TOK_TYPE_SINT64, TOK_STR_STUB, TOK_OP_ASSIGN, TOK_LIT_SINT, TOK_OP_ADD, TOK_LIT_INT]
@@ -287,8 +362,121 @@ int filterLiterals(LTok_t* tokens, uint64_t num)
         // if is a number and contains . -> TOK_LIT_FLOAT
         // if is a number and is 0 or starts with non-zero digit -> TOK_LIT_INT
         // if is true or false -> TOK_LIT_BOOL
-        // this phase is stateless
-        // 1:1 token correspondence
+        // this phase is stateful
+        // 1:N token correspondence
+        // stateful because of . between two numbers -> float
+        // 1:N because in case of 123.456 which is [TOK_STR_STUB, TOK_OP_FROM, TOK_STR_STUB] -> [TOK_LIT_FLOAT]
+
+        for (uint64_t i = 0; i < *num; i++)
+        {
+                LTok_t currentToken = (*tokens)[i];
+                if (currentToken.token != TOK_STR_STUB)
+                {
+                        continue;
+                }
+
+                uint8_t type = inferLitType(currentToken);
+                switch (type)
+                {
+                        case TYPE_UNDEFINED:
+                        {
+                                continue;
+                        }
+                        case TYPE_SINT:
+                        {
+                                (*tokens)[i].token = TOK_LIT_SINT;
+                                break;
+                        }
+                        case TYPE_UINT:
+                        {
+                                (*tokens)[i].token = TOK_LIT_UINT;
+                                break;
+                        }
+                        case TYPE_FLOAT32:
+                        {
+                                (*tokens)[i].token = TOK_LIT_FLOAT32;
+                                break;
+                        }
+                        case TYPE_FLOAT64:
+                        {
+                                (*tokens)[i].token = TOK_LIT_FLOAT64;
+                                break;
+                        }
+                        case TYPE_BOOL:
+                        {
+                                (*tokens)[i].token = TOK_LIT_BOOL;
+                                break;
+                        }
+                        case TYPE_INT:
+                        {
+                                uint8_t lookAheadType = literalLookAhead(*tokens, *num, i);
+                                if (lookAheadType == TYPE_INT)
+                                {
+                                        (*tokens)[i].token = TOK_LIT_INT;
+                                }
+                                else if (lookAheadType == TYPE_FLOAT)
+                                {
+                                        (*tokens)[i].token = TOK_LIT_FLOAT;
+                                        (*tokens)[i].len += 1 + (*tokens)[i + 2].len;
+                                        memcpy((*tokens)[i].data + currentToken.len, ".", 1);
+                                        memcpy((*tokens)[i].data + currentToken.len + 1, (*tokens)[i + 2].data, (*tokens)[i + 2].len);
+                                        (*tokens)[i].data[(*tokens)[i].len] = '\0';
+                                        (*tokens)[i + 1].line = UINT64_MAX;
+                                        (*tokens)[i + 1].pos = UINT64_MAX;
+                                        (*tokens)[i + 2].line = UINT64_MAX;
+                                        (*tokens)[i + 2].pos = UINT64_MAX;
+                                        i++;
+                                }
+                                else if (lookAheadType == TYPE_FLOAT32)
+                                {
+                                        (*tokens)[i].token = TOK_LIT_FLOAT32;
+                                        (*tokens)[i].len += 1 + (*tokens)[i + 2].len;
+                                        memcpy((*tokens)[i].data + currentToken.len, ".", 1);
+                                        memcpy((*tokens)[i].data + currentToken.len + 1, (*tokens)[i + 2].data, (*tokens)[i + 2].len);
+                                        (*tokens)[i].data[(*tokens)[i].len] = '\0';
+                                        (*tokens)[i + 1].line = UINT64_MAX;
+                                        (*tokens)[i + 1].pos = UINT64_MAX;
+                                        (*tokens)[i + 2].line = UINT64_MAX;
+                                        (*tokens)[i + 2].pos = UINT64_MAX;
+                                        i++;
+                                }
+                                else if (lookAheadType == TYPE_FLOAT64)
+                                {
+                                        (*tokens)[i].token = TOK_LIT_FLOAT64;
+                                        (*tokens)[i].len += 1 + (*tokens)[i + 2].len;
+                                        memcpy((*tokens)[i].data + currentToken.len, ".", 1);
+                                        memcpy((*tokens)[i].data + currentToken.len + 1, (*tokens)[i + 2].data, (*tokens)[i + 2].len);
+                                        (*tokens)[i].data[(*tokens)[i].len] = '\0';
+                                        (*tokens)[i + 1].line = UINT64_MAX;
+                                        (*tokens)[i + 1].pos = UINT64_MAX;
+                                        (*tokens)[i + 2].line = UINT64_MAX;
+                                        (*tokens)[i + 2].pos = UINT64_MAX;
+                                        i++;
+                                }
+                                break;
+                        }
+                        default:
+                        {
+                                fprintf(stderr, "Unknown type inferred for token: %s\n", currentToken.data);
+                                break;
+                        }
+                }
+        }
+
+        sortTokensByPosAndLine(*tokens, *num);
+
+        for (uint64_t i = *num - 1; i < *num; i--)
+        {
+                if ((*tokens)[i].line == UINT64_MAX && (*tokens)[i].pos == UINT64_MAX)
+                {
+                        free((*tokens)[i].data);
+                        (*num)--;
+                }
+                else
+                {
+                        break;
+                }
+        }
 
         return 0;
 }
@@ -534,18 +722,14 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
                 if (i == numWords) i = 0;
         }
 
-        if (sortTokensByPos(tokens, 0, *num - 1) != 0)
-        {
-                fprintf(stderr, "sortTokensByPos failed\n");
-                return 1;
-        }
+        sortTokensByPos(tokens, *num);
 
         if (filterStrings(&tokens, num) != 0)
         {
                 fprintf(stderr, "filterStrings failed\n");
                 return 1;
         }
-        if (filterLiterals(tokens, *num) != 0)
+        if (filterLiterals(&tokens, num) != 0)
         {
                 fprintf(stderr, "filterLiterals failed\n");
                 return 1;
