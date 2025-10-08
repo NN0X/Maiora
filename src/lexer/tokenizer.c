@@ -151,7 +151,7 @@ int getFirstLongestTokenFit(char** fit, char** beforefit, char** afterfit, LTok_
         return 0;
 }
 
-int filterStrings(LTok_t* tokens, uint64_t num)
+int filterStrings(LTok_t** tokens, uint64_t *num)
 {
         // TODO: string filtering phase (take care of TOK_STR_STUB that are actual strings - so TOK_LIT_CHAR)
         // INFO: "t{n}t" -> [TOK_OP_DQUOTE, TOK_LIT_CHAR, TOK_OP_LCURLY, TOK_STR_STUB, TOK_OP_RCURLY, TOK_LIT_CHAR, TOK_OP_DQUOTE]
@@ -159,6 +159,68 @@ int filterStrings(LTok_t* tokens, uint64_t num)
         // or between TOK_OP_DQUOTE and TOK_OP_RCURLY
         // or between TOK_OP_LCURLY and TOK_OP_DQUOTE
         // this phase is stateful
+        // 1:N token correspondence
+
+        LTok_t* newTokens = (LTok_t*)malloc(sizeof(LTok_t) * MAX_STATEMENT_LEN);
+        if (newTokens == NULL)
+        {
+                fprintf(stderr, "Memory allocation failed for newTokens\n");
+                return 1;
+        }
+        uint64_t numNewTokens = 0;
+
+        int isInDquotes = 0;
+        int isInDquotesAndCurlies = 0;
+
+        for (uint64_t i = 0; i < *num; i++)
+        {
+                LTok_t currentToken = (*tokens)[i];
+                if (currentToken.token != TOK_OP_DQUOTE ||
+                    currentToken.token != TOK_OP_RCURLY ||
+                    currentToken.token != TOK_OP_LCURLY ||
+                    currentToken.token != TOK_STR_STUB)
+                {
+                        continue;
+                }
+
+                if (currentToken.token == TOK_OP_DQUOTE)
+                {
+                        if (isInDquotes == 0)
+                        {
+                                isInDquotes = 1;
+                        }
+                        else
+                        {
+                                isInDquotes = 0;
+                                isInDquotesAndCurlies = 0;
+                        }
+                }
+                else if (currentToken.token == TOK_OP_LCURLY && isInDquotes == 1)
+                {
+                        isInDquotesAndCurlies = 1;
+                }
+                else if (currentToken.token == TOK_OP_RCURLY && isInDquotesAndCurlies == 1)
+                {
+                        isInDquotesAndCurlies = 0;
+                }
+                else if (currentToken.token == TOK_STR_STUB)
+                {
+                }
+        }
+
+        for (uint64_t i = 0; i < numNewTokens; i++)
+        {
+                (*tokens)[*num + i] = newTokens[i];
+        }
+
+        *num += numNewTokens;
+        free(newTokens);
+
+        if (sortTokensByPos(*tokens, 0, *num - 1) != 0)
+        {
+                fprintf(stderr, "sortTokensByPos failed\n");
+                return 1;
+        }
 
         return 0;
 }
@@ -172,6 +234,7 @@ int filterLiterals(LTok_t* tokens, uint64_t num)
         // if is a number and is 0 or starts with non-zero digit -> TOK_LIT_INT
         // if is true or false -> TOK_LIT_BOOL
         // this phase is stateless
+        // 1:1 token correspondence
 
         return 0;
 }
@@ -182,6 +245,7 @@ int filterIds(LTok_t* tokens, uint64_t num)
         // INFO: sint64 var = 1s + 2 -> [TOK_TYPE_SINT64, TOK_ID, TOK_OP_ASSIGN, TOK_LIT_SINT, TOK_OP_ADD, TOK_LIT_INT]
         // the rest
         // this phase is stateless
+        // 1:1 token correspondence
 
         return 0;
 }
