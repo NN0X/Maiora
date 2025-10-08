@@ -32,6 +32,31 @@ int sortTokensByPos(LTok_t* tokens, uint64_t low, uint64_t high)
         return 0;
 }
 
+int sortTokensByPosAndLine(LTok_t* tokens, uint64_t low, uint64_t high)
+{
+        if (low >= high) return 0;
+        uint64_t pivotLine = tokens[high].line;
+        uint64_t pivotPos = tokens[high].pos;
+        uint64_t i = low;
+        for (uint64_t j = low; j < high; j++)
+        {
+                if (tokens[j].line < pivotLine || (tokens[j].line == pivotLine && tokens[j].pos <= pivotPos))
+                {
+                        LTok_t temp = tokens[i];
+                        tokens[i] = tokens[j];
+                        tokens[j] = temp;
+                        i++;
+                }
+        }
+        LTok_t temp = tokens[i];
+        tokens[i] = tokens[high];
+        tokens[high] = temp;
+        if (i > 0) sortTokensByPosAndLine(tokens, low, i - 1);
+        sortTokensByPosAndLine(tokens, i + 1, high);
+
+        return 0;
+}
+
 int getTokenMatch(char *str)
 {
         for (uint64_t i = 0; i < TOK_META_STR_BEGIN; i++)
@@ -175,9 +200,9 @@ int filterStrings(LTok_t** tokens, uint64_t *num)
         for (uint64_t i = 0; i < *num; i++)
         {
                 LTok_t currentToken = (*tokens)[i];
-                if (currentToken.token != TOK_OP_DQUOTE ||
-                    currentToken.token != TOK_OP_RCURLY ||
-                    currentToken.token != TOK_OP_LCURLY ||
+                if (currentToken.token != TOK_OP_DQUOTE &&
+                    currentToken.token != TOK_OP_RCURLY &&
+                    currentToken.token != TOK_OP_LCURLY &&
                     currentToken.token != TOK_STR_STUB)
                 {
                         continue;
@@ -203,8 +228,28 @@ int filterStrings(LTok_t** tokens, uint64_t *num)
                 {
                         isInDquotesAndCurlies = 0;
                 }
-                else if (currentToken.token == TOK_STR_STUB)
+                else if (currentToken.token == TOK_STR_STUB && isInDquotes == 1 && isInDquotesAndCurlies == 0)
                 {
+                        for (uint64_t j = 0; j < currentToken.len; j++)
+                        {
+                                LTok_t newToken;
+                                newToken.token = TOK_LIT_CHAR;
+                                newToken.pos = currentToken.pos + j;
+                                newToken.line = currentToken.line;
+                                newToken.len = 1;
+                                newToken.data = (char*)malloc(2);
+                                if (newToken.data == NULL)
+                                {
+                                        fprintf(stderr, "Memory allocation failed for newToken data\n");
+                                        return 1;
+                                }
+                                newToken.data[0] = currentToken.data[j];
+                                newToken.data[1] = '\0';
+                                newTokens[numNewTokens] = newToken;
+                                numNewTokens++;
+                        }
+                        (*tokens)[i].line = UINT64_MAX;
+                        (*tokens)[i].pos = UINT64_MAX;
                 }
         }
 
@@ -216,10 +261,19 @@ int filterStrings(LTok_t** tokens, uint64_t *num)
         *num += numNewTokens;
         free(newTokens);
 
-        if (sortTokensByPos(*tokens, 0, *num - 1) != 0)
+        sortTokensByPosAndLine(*tokens, 0, *num - 1);
+
+        for (uint64_t i = *num - 1; i < *num; i--)
         {
-                fprintf(stderr, "sortTokensByPos failed\n");
-                return 1;
+                if ((*tokens)[i].line == UINT64_MAX && (*tokens)[i].pos == UINT64_MAX)
+                {
+                        free((*tokens)[i].data);
+                        (*num)--;
+                }
+                else
+                {
+                        break;
+                }
         }
 
         return 0;
@@ -486,7 +540,7 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
                 return 1;
         }
 
-        if (filterStrings(tokens, *num) != 0)
+        if (filterStrings(&tokens, num) != 0)
         {
                 fprintf(stderr, "filterStrings failed\n");
                 return 1;

@@ -16,7 +16,7 @@ def reconstruct_code_from_tokens(token_dump_path):
     Returns reconstructed code as string.
     """
     token_pattern = re.compile(
-        r'^(Token|SPACE_STUB|STR_STUB)\s+\d+:\s*\|\s*(.*?)\s*\|\s*line:\s*(\d+)\s*\|\s*pos:\s*(\d+)'
+        r'^(Token|SPACE_STUB|STR_STUB|TOK_ID|TOK_LIT)\s+\d+:\s*\|\s*(.*?)\s*\|\s*line:\s*(\d+)\s*\|\s*pos:\s*(\d+)'
     )
 
     lines = {}
@@ -39,6 +39,9 @@ def reconstruct_code_from_tokens(token_dump_path):
                 token_value = " "
             elif value == "TOK_OP_SEMICOLON":
                 token_value = ";"
+            elif kind in {"STR_STUB", "TOK_ID", "TOK_LIT"}:
+                # These behave the same way: use the string value directly
+                token_value = value
             else:
                 token_value = value
 

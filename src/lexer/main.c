@@ -49,9 +49,13 @@ int main(int argc, char* argv[])
                 LTok_t token = lexerData.tokens[i];
                 if (token.token < TOK_STR_STUB)
                     printf("Token %lu: | %s | line: %lu | pos: %lu\n", i, TOKENS[token.token], token.line, token.pos);
-                else if (token.token != TOK_SPACE_STUB)
+                else if (token.token > TOK_LIT_CHAR)
+                    printf("TOK_ID %lu: | %s | line: %lu | pos: %lu\n", i, token.data, token.line, token.pos);
+                else if (token.token > TOK_SPACE)
+                    printf("TOK_LIT %lu: | %s | line: %lu | pos: %lu\n", i, token.data, token.line, token.pos);
+                else if (token.token == TOK_STR_STUB)
                     printf("STR_STUB %lu: | %s | line: %lu | pos: %lu\n", i, token.data, token.line, token.pos);
-                else if (token.token == TOK_SPACE_STUB)
+                else if (token.token == TOK_SPACE)
                     printf("SPACE_STUB %lu: | line: %lu | pos: %lu\n", i, token.line, token.pos);
         }
         // ----------------
