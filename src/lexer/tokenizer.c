@@ -175,7 +175,7 @@ int getFirstLongestTokenFit(char** fit, char** beforefit, char** afterfit, LTok_
                 memcpy(token->data, word, strlen(word) + 1);
                 token->len = strlen(word);
                 token->data[token->len] = '\0';
-                memcpy(*fit, word, strlen(word) + 1);
+                memcpy(*fit, word, strlen(word));
                 (*fit)[strlen(word)] = '\0';
                 (*beforefit)[0] = '\0';
                 (*afterfit)[0] = '\0';
@@ -291,6 +291,7 @@ enum Type
 {
         TYPE_UNDEFINED = 0,
         TYPE_INT,
+        TYPE_INT_OR_FLOAT,
         TYPE_FLOAT,
         TYPE_SINT,
         TYPE_UINT,
@@ -298,7 +299,6 @@ enum Type
         TYPE_FLOAT64,
         TYPE_BOOL
 };
-
 
 uint8_t inferLitType(LTok_t token)
 {
@@ -332,7 +332,7 @@ uint8_t inferLitType(LTok_t token)
                 return TYPE_FLOAT64;
         }
 
-        return TYPE_INT;
+        return TYPE_INT_OR_FLOAT;
 }
 
 uint8_t literalLookAhead(LTok_t* tokens, uint64_t num, uint64_t index)
@@ -408,7 +408,7 @@ int filterLiterals(LTok_t** tokens, uint64_t *num)
                                 (*tokens)[i].token = TOK_LIT_BOOL;
                                 break;
                         }
-                        case TYPE_INT:
+                        case TYPE_INT_OR_FLOAT:
                         {
                                 uint8_t lookAheadType = literalLookAhead(*tokens, *num, i);
                                 if (lookAheadType == TYPE_INT)
