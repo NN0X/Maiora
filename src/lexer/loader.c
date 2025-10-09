@@ -65,7 +65,6 @@ int openSourceFile(FILE** file, char* filename, LMeta_t* metadata)
         metadata->filename[nameSize] = '\0';
 
         free(srcname);
-        uint64_t currLine = 1;
 
         return 0;
 }
@@ -73,11 +72,16 @@ int openSourceFile(FILE** file, char* filename, LMeta_t* metadata)
 int loadSourceFile(char** src, FILE* file, LMeta_t* metadata)
 {
         fseek(file, 0, SEEK_END);
-        uint64_t fileSize = ftell(file);
+        int64_t fileSize = ftell(file);
         fseek(file, 0, SEEK_SET);
-        if (fileSize <= 0)
+        if (fileSize == 0)
         {
-                fprintf(stderr, "File size is %lu", fileSize);
+                fprintf(stderr, "File size is 0.\n");
+                return 1;
+        }
+        else if (fileSize < 0)
+        {
+                fprintf(stderr, "ftell failed.\n");
                 return 1;
         }
 

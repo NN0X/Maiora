@@ -6,131 +6,173 @@ import subprocess
 import sys
 from pathlib import Path
 import difflib
-import os
 
-def reconstruct_code_from_tokens(token_dump_path):
+# Tolerant regex for token lines that include "Line: <n> | Pos: <p> | Data: <text>"
+TOKEN_LINE_RE = re.compile(
+    r'^\s*(?:Token\s+\d+\s*:)?\s*(?P<value>.*?)\s*\|\s*Line\s*:\s*(?P<line>\d+)\s*\|\s*Pos\s*:\s*(?P<pos>\d+)\s*\|\s*Data\s*:\s*(?P<data>.*)$'
+)
+
+# Fallback mapping when Data: is empty and only a numeric code or stub is present
+FALLBACK_TOKEN_MAP = {
+    '76': ' ',  # seen in example dumps representing a space
+    'SPACE_STUB': ' ',
+    'TOK_OP_SEMICOLON': ';',
+    'TOK_OP_LBRACE': '{',
+    'TOK_OP_RBRACE': '}',
+    'TOK_OP_LPAREN': '(',
+    'TOK_OP_RPAREN': ')',
+}
+
+def parse_token_line(line):
+    m = TOKEN_LINE_RE.match(line)
+    if not m:
+        return None
+    value = m.group('value').strip()
+    line_no = int(m.group('line'))
+    pos = int(m.group('pos'))
+    data = m.group('data').rstrip()
+
+    if data.strip() != '':
+        token_text = data.strip()
+    else:
+        # fallback to visible token value or known numeric codes
+        token_text = FALLBACK_TOKEN_MAP.get(value, value)
+    return line_no, pos, token_text
+
+def reconstruct_from_token_dump_text(token_dump_text):
     """
-    Fully 1:1 reconstruction of original code from token dump.
-    Preserves spaces, semicolons, and newlines exactly as encoded in line/pos data.
-    Assumes pos is 1-indexed in token dump.
-    Returns reconstructed code as string.
+    Reconstruct source text from the token dump text (string).
+    Returns (reconstructed_text, parsed_token_count).
     """
-    token_pattern = re.compile(
-        r'^(Token|SPACE_STUB|STR_STUB|TOK_ID|TOK_LIT)\s+\d+:\s*\|\s*(.*?)\s*\|\s*line:\s*(\d+)\s*\|\s*pos:\s*(\d+)'
-    )
+    lines = {}  # line_no -> dict(col -> token_text)
+    parsed_count = 0
 
-    lines = {}
+    for raw in token_dump_text.splitlines():
+        parsed = parse_token_line(raw)
+        if parsed is None:
+            continue
+        ln, pos, tok = parsed
+        col = max(0, pos - 1)  # convert 1-indexed to 0-indexed
+        if ln not in lines:
+            lines[ln] = {}
+        # avoid clobbering same column: find next free column if needed
+        if col in lines[ln]:
+            shift = 1
+            while (col + shift) in lines[ln]:
+                shift += 1
+            col += shift
+        lines[ln][col] = tok
+        parsed_count += 1
 
-    with open(token_dump_path, "r", encoding="utf-8") as f:
-        for raw_line in f:
-            match = token_pattern.match(raw_line)
-            if not match:
-                continue
+    if parsed_count == 0:
+        return "", 0
 
-            kind, value, line_str, pos_str = match.groups()
-            line = int(line_str)
-            pos = int(pos_str) - 1  # Convert 1-indexed to 0-indexed
-
-            if line not in lines:
-                lines[line] = {}
-
-            # Handle token values
-            if kind == "SPACE_STUB":
-                token_value = " "
-            elif value == "TOK_OP_SEMICOLON":
-                token_value = ";"
-            elif kind in {"STR_STUB", "TOK_ID", "TOK_LIT"}:
-                # These behave the same way: use the string value directly
-                token_value = value
-            else:
-                token_value = value
-
-            lines[line][pos] = token_value
-
-    max_line = max(lines.keys(), default=0)
-    output_lines = []
-
+    max_line = max(lines.keys())
+    out_lines = []
     for ln in range(1, max_line + 1):
         if ln not in lines:
-            output_lines.append("")
+            out_lines.append("")
             continue
-
-        tokens_sorted = sorted(lines[ln].items())
-        reconstructed_line = ""
+        items = sorted(lines[ln].items(), key=lambda x: x[0])
         current_pos = 0
-        for pos, text in tokens_sorted:
-            if pos > current_pos:
-                reconstructed_line += " " * (pos - current_pos)
-            reconstructed_line += text
-            current_pos = pos + len(text)
+        pieces = []
+        for col, text in items:
+            if col > current_pos:
+                pieces.append(" " * (col - current_pos))
+            pieces.append(text)
+            current_pos = col + len(text)
+        out_lines.append("".join(pieces))
+    reconstructed = "\n".join(out_lines)
+    return reconstructed.rstrip("\n"), parsed_count
 
-        output_lines.append(reconstructed_line)
-
-    code = "\n".join(output_lines)
-    return code.rstrip("\n")  # Ignore trailing newlines at the end
-
-def compare_files(original_code, reconstructed_code):
+def call_main_capture(input_path: Path):
     """
-    Compares two strings line by line and prints differences.
-    Ignores trailing newlines.
+    Run ./main input 1 and capture stdout. If stdout is empty, try ./main input token_dump.log.
+    Returns tuple (token_dump_text, method, returncode, stderr_text).
+    method is 'stdout' or 'file:<filename>' or 'none'.
     """
-    original_lines = original_code.rstrip("\n").splitlines()
-    reconstructed_lines = reconstructed_code.rstrip("\n").splitlines()
-    diff = list(difflib.unified_diff(original_lines, reconstructed_lines,
-                                     fromfile="original", tofile="reconstructed", lineterm=""))
-    if diff:
-        print("❌ Differences found:")
-        for line in diff:
+    proc = subprocess.run(["./main", str(input_path), "1"], capture_output=True, text=True)
+    if proc.returncode != 0:
+        # still check stdout if present
+        if proc.stdout and proc.stdout.strip():
+            return proc.stdout, "stdout", proc.returncode, proc.stderr or ""
+        # try fallback anyway
+    if proc.stdout and proc.stdout.strip():
+        return proc.stdout, "stdout", proc.returncode, proc.stderr or ""
+
+    # fallback: ask binary to write token_dump.log
+    fallback_file = "token_dump.log"
+    proc2 = subprocess.run(["./main", str(input_path), fallback_file], capture_output=True, text=True)
+    # prefer reading the file if it exists
+    if Path(fallback_file).exists():
+        txt = Path(fallback_file).read_text(encoding="utf-8", errors="replace")
+        return txt, f"file:{fallback_file}", proc2.returncode, proc2.stderr or ""
+    # otherwise, return whatever proc2 gave (maybe stdout)
+    if proc2.stdout and proc2.stdout.strip():
+        return proc2.stdout, "stdout", proc2.returncode, proc2.stderr or ""
+    return "", "none", proc2.returncode, proc2.stderr or ""
+
+def unified_diff(a_text, b_text, a_name="original", b_name="reconstructed"):
+    a_lines = a_text.rstrip("\n").splitlines()
+    b_lines = b_text.rstrip("\n").splitlines()
+    return list(difflib.unified_diff(a_lines, b_lines, fromfile=a_name, tofile=b_name, lineterm=""))
+
+def main(argv):
+    if len(argv) != 2:
+        print(f"Usage: python {Path(argv[0]).name} <input_file>.mai")
+        return 2
+
+    input_path = Path(argv[1])
+    if not input_path.exists():
+        print(f"Error: input file {input_path} not found.")
+        return 1
+
+    token_dump_text, method, rc, stderr = call_main_capture(input_path)
+
+    if rc != 0 and not token_dump_text.strip():
+        print(f"Error: ./main returned exit code {rc} and produced no token output.")
+        if stderr:
+            print("stderr:", stderr.strip())
+        return 1
+
+    if not token_dump_text.strip():
+        print("Error: no token output captured from ./main.")
+        return 1
+
+    reconstructed_text, parsed_count = reconstruct_from_token_dump_text(token_dump_text)
+
+    if parsed_count == 0:
+        print("Error: token dump parsed 0 token lines (format mismatch).")
+        # for debugging, we will write the token dump for inspection
+        Path("token_dump.log").write_text(token_dump_text, encoding="utf-8", errors="replace")
+        print("Wrote token_dump.log for debugging.")
+        return 1
+
+    original_text = input_path.read_text(encoding="utf-8", errors="replace")
+
+    # Compare ignoring a single trailing newline at EOF (like original script)
+    if original_text.rstrip("\n") == reconstructed_text.rstrip("\n"):
+        print("✅ Reconstructed source matches the input exactly. No dump files written.")
+        return 0
+
+    # Not identical -> write dumps for inspection
+    token_path = Path("token_dump.log")
+    reconstructed_path = Path("reconstructed.mai")
+    token_path.write_text(token_dump_text, encoding="utf-8", errors="replace")
+    reconstructed_path.write_text(reconstructed_text, encoding="utf-8", errors="replace")
+
+    print("❌ Reconstructed source differs from input.")
+    print(f"Saved token dump to: {token_path}")
+    print(f"Saved reconstructed source to: {reconstructed_path}")
+    print()
+    diff_lines = unified_diff(original_text, reconstructed_text, a_name=str(input_path), b_name=str(reconstructed_path))
+    if diff_lines:
+        for line in diff_lines:
             print(line)
-        return False
     else:
-        print("✅ No differences found. Reconstruction matches original exactly!")
-        return True
+        print("(no textual diff produced; binary/encoding difference?)")
 
-def main():
-    if len(sys.argv) != 2:
-        print(f"Usage: python {sys.argv[0]} <input_file>")
-        sys.exit(1)
-
-    input_file = Path(sys.argv[1])
-    if not input_file.exists():
-        print(f"Error: {input_file} does not exist.")
-        sys.exit(1)
-
-    # Run ./main <input_file> 1
-    result = subprocess.run(["./main", str(input_file), "1"], capture_output=True, text=True)
-    if result.returncode != 0:
-        print("Error: ./main execution failed")
-        print(result.stderr)
-        sys.exit(1)
-
-    # Write token dump to file
-    token_dump_path = "token_dump.log"
-    with open(token_dump_path, "w", encoding="utf-8") as f:
-        f.write(result.stdout)
-
-    # Reconstruct code from token dump
-    reconstructed_code = reconstruct_code_from_tokens(token_dump_path)
-
-    # Read original code
-    with open(input_file, "r", encoding="utf-8") as f:
-        original_code = f.read()
-
-    # Compare
-    matched = compare_files(original_code, reconstructed_code)
-
-    # Optional: save reconstructed file
-    reconstructed_path = "reconstructed.txt"
-    with open(reconstructed_path, "w", encoding="utf-8") as f:
-        f.write(reconstructed_code)
-
-    if matched:
-        # Delete created files if no differences
-        os.remove(token_dump_path)
-        os.remove(reconstructed_path)
-    else:
-        print(f"✅ Reconstructed source saved to {reconstructed_path}")
+    return 0
 
 if __name__ == "__main__":
-    main()
-
+    raise SystemExit(main(sys.argv))

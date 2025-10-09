@@ -193,12 +193,6 @@ int getFirstLongestTokenFit(char** fit, char** beforefit, char** afterfit, LTok_
 int filterStrings(LTok_t** tokens, uint64_t *num)
 {
         // TODO: string filtering phase (take care of TOK_STR_STUB that are actual strings - so TOK_LIT_CHAR)
-        // INFO: "t{n}t" -> [TOK_OP_DQUOTE, TOK_LIT_CHAR, TOK_OP_LCURLY, TOK_STR_STUB, TOK_OP_RCURLY, TOK_LIT_CHAR, TOK_OP_DQUOTE]
-        // so important to know if token is between two TOK_OP_DQUOTE or TOK_OP_QUOTE
-        // or between TOK_OP_DQUOTE and TOK_OP_RCURLY
-        // or between TOK_OP_LCURLY and TOK_OP_DQUOTE
-        // this phase is stateful
-        // 1:N token correspondence
 
         LTok_t* newTokens = (LTok_t*)malloc(sizeof(LTok_t) * MAX_STATEMENT_LEN);
         if (newTokens == NULL)
@@ -364,15 +358,6 @@ uint8_t literalLookAhead(LTok_t* tokens, uint64_t num, uint64_t index)
 int filterLiterals(LTok_t** tokens, uint64_t *num)
 {
         // TODO: literation phase (take care of literals that are not chars)
-        // INFO: sint64 var = 1s + 2 -> [TOK_TYPE_SINT64, TOK_STR_STUB, TOK_OP_ASSIGN, TOK_LIT_SINT, TOK_OP_ADD, TOK_LIT_INT]
-        // if is a number and ends with s, u, f, d -> TOK_LIT_SINT, TOK_LIT_UINT, TOK_LIT_FLOAT32, TOK_LIT_FLOAT64
-        // if is a number and contains . -> TOK_LIT_FLOAT
-        // if is a number and is 0 or starts with non-zero digit -> TOK_LIT_INT
-        // if is true or false -> TOK_LIT_BOOL
-        // this phase is stateful
-        // 1:N token correspondence
-        // stateful because of . between two numbers -> float
-        // 1:N because in case of 123.456 which is [TOK_STR_STUB, TOK_OP_FROM, TOK_STR_STUB] -> [TOK_LIT_FLOAT]
 
         for (uint64_t i = 0; i < *num; i++)
         {
@@ -425,6 +410,12 @@ int filterLiterals(LTok_t** tokens, uint64_t *num)
                                 {
                                         (*tokens)[i].token = TOK_LIT_FLOAT;
                                         (*tokens)[i].len += 1 + (*tokens)[i + 2].len;
+                                        (*tokens)[i].data = (char*)realloc((*tokens)[i].data, (*tokens)[i].len + 1);
+                                        if ((*tokens)[i].data == NULL)
+                                        {
+                                                fprintf(stderr, "realloc failed for token data\n");
+                                                return 1;
+                                        }
                                         memcpy((*tokens)[i].data + currentToken.len, ".", 1);
                                         memcpy((*tokens)[i].data + currentToken.len + 1, (*tokens)[i + 2].data, (*tokens)[i + 2].len);
                                         (*tokens)[i].data[(*tokens)[i].len] = '\0';
@@ -438,6 +429,12 @@ int filterLiterals(LTok_t** tokens, uint64_t *num)
                                 {
                                         (*tokens)[i].token = TOK_LIT_FLOAT32;
                                         (*tokens)[i].len += 1 + (*tokens)[i + 2].len;
+                                        (*tokens)[i].data = (char*)realloc((*tokens)[i].data, (*tokens)[i].len + 1);
+                                        if ((*tokens)[i].data == NULL)
+                                        {
+                                                fprintf(stderr, "realloc failed for token data\n");
+                                                return 1;
+                                        }
                                         memcpy((*tokens)[i].data + currentToken.len, ".", 1);
                                         memcpy((*tokens)[i].data + currentToken.len + 1, (*tokens)[i + 2].data, (*tokens)[i + 2].len);
                                         (*tokens)[i].data[(*tokens)[i].len] = '\0';
@@ -451,6 +448,12 @@ int filterLiterals(LTok_t** tokens, uint64_t *num)
                                 {
                                         (*tokens)[i].token = TOK_LIT_FLOAT64;
                                         (*tokens)[i].len += 1 + (*tokens)[i + 2].len;
+                                        (*tokens)[i].data = (char*)realloc((*tokens)[i].data, (*tokens)[i].len + 1);
+                                        if ((*tokens)[i].data == NULL)
+                                        {
+                                                fprintf(stderr, "realloc failed for token data\n");
+                                                return 1;
+                                        }
                                         memcpy((*tokens)[i].data + currentToken.len, ".", 1);
                                         memcpy((*tokens)[i].data + currentToken.len + 1, (*tokens)[i + 2].data, (*tokens)[i + 2].len);
                                         (*tokens)[i].data[(*tokens)[i].len] = '\0';
@@ -491,10 +494,14 @@ int filterLiterals(LTok_t** tokens, uint64_t *num)
 int filterIds(LTok_t* tokens, uint64_t num)
 {
         // TODO: id phase (take care of ids)
-        // INFO: sint64 var = 1s + 2 -> [TOK_TYPE_SINT64, TOK_ID, TOK_OP_ASSIGN, TOK_LIT_SINT, TOK_OP_ADD, TOK_LIT_INT]
-        // the rest
-        // this phase is stateless
-        // 1:1 token correspondence
+
+        for (uint64_t i = 0; i < num; i++)
+        {
+                if (tokens[i].token == TOK_STR_STUB)
+                {
+                        tokens[i].token = TOK_ID;
+                }
+        }
 
         return 0;
 }
@@ -514,7 +521,7 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
         //printf("\n");
         // ------------------
 
-        uint64_t* spacePositions = (uint64_t*)malloc(1024*sizeof(uint64_t));
+        uint64_t* spacePositions = (uint64_t*)malloc(sizeof(uint64_t) * MAX_STATEMENT_LEN);
         if (spacePositions == NULL)
         {
                 fprintf(stderr, "Memory allocation failed for spacePositions\n");
@@ -726,6 +733,10 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
                 tokens[*num] = token;
                 (*num)++;
 
+                free(fit);
+                free(beforefit);
+                free(afterfit);
+
                 i++;
                 if (i == numWords) i = 0;
         }
@@ -762,7 +773,7 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
 int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
 {
         lexerData->metadata = *metadata;
-        lexerData->tokens = (LTok_t*)malloc(sizeof(LTok_t) * metadata->fileSize);
+        lexerData->tokens = (LTok_t*)malloc(sizeof(LTok_t) * metadata->fileSize * 2);
         if (lexerData->tokens == NULL)
         {
                 fprintf(stderr, "Memory allocation failed for tokens\n");
