@@ -98,7 +98,7 @@ int getLongestTokenFit(char** fit, char** beforefit, char** afterfit, LTok_t* to
                 int tokenMatch = getTokenMatch(*fit);
                 if (tokenMatch >= 0)
                 {
-                        token->data = (char*)malloc(fitLen);
+                        token->data = (char*)malloc(fitLen + 1);
                         if (token->data == NULL)
                         {
                                 fprintf(stderr, "Memory allocation failed for token data\n");
@@ -108,7 +108,7 @@ int getLongestTokenFit(char** fit, char** beforefit, char** afterfit, LTok_t* to
                         token->data[fitLen] = '\0';
                         token->token = tokenMatch;
                         token->pos = wordPos + offset;
-                        token->len = fitLen - 1;
+                        token->len = fitLen;
 
                         if (offset > 0)
                         {
@@ -180,6 +180,12 @@ int getFirstLongestTokenFit(char** fit, char** beforefit, char** afterfit, LTok_
                 (*beforefit)[0] = '\0';
                 (*afterfit)[0] = '\0';
         }
+
+        // --- DEBUG INFO ---
+        //printf("Fit: %s\n", *fit);
+        //printf("Beforefit: %s\n", *beforefit);
+        //printf("Afterfit: %s\n", *afterfit);
+        // ------------------
 
         return 0;
 }
@@ -615,7 +621,7 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
                 numWords++;
         }
 
-        uint64_t *wordPositions = (uint64_t*)malloc(numWords * sizeof(uint64_t));
+        uint64_t *wordPositions = (uint64_t*)malloc(sizeof(uint64_t) * MAX_STATEMENT_LEN);
         if (wordPositions == NULL)
         {
                 fprintf(stderr, "Memory allocation failed for wordPositions\n");
@@ -863,6 +869,11 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                         metadata->numTokens++;
                 }
 
+                if (pos == 0)
+                {
+                        continue;
+                }
+
                 statementNum++;
 
                 // --- DEBUG INFO ---
@@ -899,6 +910,8 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
                 memset(statement, 0, MAX_STATEMENT_LEN);
                 pos = 0;
         }
+
+        sortTokensByPosAndLine(lexerData->tokens, metadata->numTokens);
 
         free(statement);
 

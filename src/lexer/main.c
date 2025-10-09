@@ -4,6 +4,7 @@
 #include "lexer.h"
 #include "loader.h"
 #include "tokenizer.h"
+#include "token.h"
 
 int main(int argc, char* argv[])
 {
@@ -47,8 +48,8 @@ int main(int argc, char* argv[])
         for (uint64_t i = 0; i < metadata.numTokens; i++)
         {
                 LTok_t token = lexerData.tokens[i];
-                printf("Token %lu: %d | Line: %lu | Pos: %lu | Data: %s\n",
-                       i, token.token, token.line, token.pos, token.data);
+                printf("Token %lu: %s | Line: %lu | Pos: %lu | Data: %s\n",
+                       i, TOKENS[token.token], token.line, token.pos, token.data);
         }
         // ----------------
 
