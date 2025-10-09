@@ -117,46 +117,23 @@ enum Token
         // --- STRINGS ---
 
         TOK_STR_STUB,           // placeholder for tokens that can be considered strings before lexer string filtering phase
-        TOK_SPACE_STUB,         // placeholder for spaces
+        TOK_SPACE,              // space
 
         // --- LITERALS ---
 
-        TOK_LIT_STUB,           // placeholder for literals before lexer literation phase
-
-        TOK_LIT_SINT8,          // -1s
-        TOK_LIT_SINT16,         // -1s
-        TOK_LIT_SINT32,         // -1s
-        TOK_LIT_SINT64,         // 1s
-        TOK_LIT_UINT8,          // 1s
-        TOK_LIT_UINT16,         // 1s
-        TOK_LIT_UINT32,         // 1s
-        TOK_LIT_UINT64,         // 1s
-
-        TOK_LIT_FLOAT8,         // 0.1
-        TOK_LIT_FLOAT16,        // 0.1
-        TOK_LIT_FLOAT32,        // 0.1
-        TOK_LIT_FLOAT64,        // 0.1
-
-        TOK_LIT_ASCII,          // 'a'
-        TOK_LIT_UTF8,           // 'ą'
+        TOK_LIT_INT,            // 123
+        TOK_LIT_SINT,           // 123s
+        TOK_LIT_UINT,           // 123u
+        TOK_LIT_BOOL,           // true / false
+        TOK_LIT_FLOAT,         // 0.1
+        TOK_LIT_FLOAT32,        // 1f
+        TOK_LIT_FLOAT64,        // 1d
+        TOK_LIT_CHAR,           // 'a'
 
 
         // --- IDENTIFIERS ---
 
-        TOK_ID_STUB,            // placeholder for ids before lexer id phase
-
-        // functions
-        TOK_ID_FUNCTION,        // fooFunction
-
-        // instances
-        TOK_ID_INSTANCE,        // fooInstance
-        TOK_ID_INSTANCE_ALIAS,  // string
-
-        // variables
-        TOK_ID_VARIABLE,        // fooVar
-
-        // modules
-        TOK_ID_MODULE,          // <tok_id_module>::<tok_id_function> -> IO::print
+        TOK_ID,                 // variable_name
 
         TOK_META_NUM,
 };

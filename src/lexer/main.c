@@ -4,6 +4,7 @@
 #include "lexer.h"
 #include "loader.h"
 #include "tokenizer.h"
+#include "token.h"
 
 int main(int argc, char* argv[])
 {
@@ -29,7 +30,6 @@ int main(int argc, char* argv[])
         {
                 fprintf(stderr, "Failed to load source file.\n");
                 fclose(file);
-                free(src);
                 return 1;
         }
         fclose(file);
@@ -47,12 +47,12 @@ int main(int argc, char* argv[])
         for (uint64_t i = 0; i < metadata.numTokens; i++)
         {
                 LTok_t token = lexerData.tokens[i];
-                if (token.token < TOK_STR_STUB)
-                    printf("Token %lu: | %s | line: %lu | pos: %lu\n", i, TOKENS[token.token], token.line, token.pos);
-                else if (token.token != TOK_SPACE_STUB)
-                    printf("STR_STUB %lu: | %s | line: %lu | pos: %lu\n", i, token.data, token.line, token.pos);
-                else if (token.token == TOK_SPACE_STUB)
-                    printf("SPACE_STUB %lu: | line: %lu | pos: %lu\n", i, token.line, token.pos);
+                if (TOKENS[token.token] != NULL)
+                        printf("Token %-6lu: %-20s | Line: %-4lu | Pos: %-4lu | Data: %s\n",
+                                i, TOKENS[token.token], token.line, token.pos, token.data);
+                else
+                        printf("Token %-6lu: %-20d | Line: %-4lu | Pos: %-4lu | Data: %s\n",
+                                i, token.token, token.line, token.pos, token.data);
         }
         // ----------------
 
