@@ -8,9 +8,42 @@
 #include "loader.h"
 
 int posCompare(const void* a, const void* b)
+{
+        LTok_t* tokenA = (LTok_t*)a;
+        LTok_t* tokenB = (LTok_t*)b;
+        if (tokenA->pos < tokenB->pos)
         {
-                LTok_t* tokenA = (LTok_t*)a;
-                LTok_t* tokenB = (LTok_t*)b;
+                return -1;
+        }
+        else if (tokenA->pos > tokenB->pos)
+        {
+                return 1;
+        }
+        else
+        {
+                return 0;
+        }
+}
+
+void sortTokensByPos(LTok_t* tokens, uint64_t num)
+{
+        qsort(tokens, num, sizeof(LTok_t), posCompare);
+}
+
+int posAndLineCompare(const void* a, const void* b)
+{
+        LTok_t* tokenA = (LTok_t*)a;
+        LTok_t* tokenB = (LTok_t*)b;
+        if (tokenA->line < tokenB->line)
+        {
+                return -1;
+        }
+        else if (tokenA->line > tokenB->line)
+        {
+                return 1;
+        }
+        else
+        {
                 if (tokenA->pos < tokenB->pos)
                 {
                         return -1;
@@ -24,40 +57,7 @@ int posCompare(const void* a, const void* b)
                         return 0;
                 }
         }
-
-void sortTokensByPos(LTok_t* tokens, uint64_t num)
-{
-        qsort(tokens, num, sizeof(LTok_t), posCompare);
 }
-
-int posAndLineCompare(const void* a, const void* b)
-        {
-                LTok_t* tokenA = (LTok_t*)a;
-                LTok_t* tokenB = (LTok_t*)b;
-                if (tokenA->line < tokenB->line)
-                {
-                        return -1;
-                }
-                else if (tokenA->line > tokenB->line)
-                {
-                        return 1;
-                }
-                else
-                {
-                        if (tokenA->pos < tokenB->pos)
-                        {
-                                return -1;
-                        }
-                        else if (tokenA->pos > tokenB->pos)
-                        {
-                                return 1;
-                        }
-                        else
-                        {
-                                return 0;
-                        }
-                }
-        }
 
 void sortTokensByPosAndLine(LTok_t* tokens, uint64_t num)
 {
@@ -98,7 +98,7 @@ int getLongestTokenFit(char** fit, char** beforefit, char** afterfit, LTok_t* to
                 int tokenMatch = getTokenMatch(*fit);
                 if (tokenMatch >= 0)
                 {
-                        token->data = (char*)malloc(fitLen + 1);
+                        token->data = (char*)malloc(fitLen);
                         if (token->data == NULL)
                         {
                                 fprintf(stderr, "Memory allocation failed for token data\n");
@@ -174,6 +174,7 @@ int getFirstLongestTokenFit(char** fit, char** beforefit, char** afterfit, LTok_
                 }
                 memcpy(token->data, word, strlen(word) + 1);
                 token->len = strlen(word);
+                token->data[token->len] = '\0';
                 memcpy(*fit, word, strlen(word) + 1);
                 (*fit)[strlen(word)] = '\0';
                 (*beforefit)[0] = '\0';
@@ -270,7 +271,7 @@ int filterStrings(LTok_t** tokens, uint64_t *num)
 
         sortTokensByPosAndLine(*tokens, *num);
 
-        for (uint64_t i = *num - 1; i < *num; i--)
+        for (uint64_t i = *num - 1; i > 0; i--)
         {
                 if ((*tokens)[i].line == UINT64_MAX && (*tokens)[i].pos == UINT64_MAX)
                 {
@@ -465,7 +466,7 @@ int filterLiterals(LTok_t** tokens, uint64_t *num)
 
         sortTokensByPosAndLine(*tokens, *num);
 
-        for (uint64_t i = *num - 1; i < *num; i--)
+        for (uint64_t i = *num - 1; i > 0; i--)
         {
                 if ((*tokens)[i].line == UINT64_MAX && (*tokens)[i].pos == UINT64_MAX)
                 {
@@ -531,6 +532,7 @@ int generateTokens(LTok_t* tokens, char* statement, uint64_t len, uint64_t* num)
                                 return 1;
                         }
                         spaceToken.data[0] = ' ';
+                        spaceToken.data[1] = '\0';
                         tokens[*num] = spaceToken;
                         (*num)++;
 
