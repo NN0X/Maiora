@@ -1,4 +1,4 @@
-# Maiora Specification v0.1
+# Maiora Specification v0.1 \[OUTDATED\]
 
 ## Types
 
