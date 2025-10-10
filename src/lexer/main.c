@@ -5,6 +5,7 @@
 #include "loader.h"
 #include "tokenizer.h"
 #include "token.h"
+#include "writer.h"
 
 int main(int argc, char* argv[])
 {
@@ -41,22 +42,23 @@ int main(int argc, char* argv[])
                 free(src);
                 return 1;
         }
+        free(src);
 
         // -- DEBUG INFO ---
-        printf("Generated %lu tokens:\n", metadata.numTokens);
-        for (uint64_t i = 0; i < metadata.numTokens; i++)
-        {
-                LTok_t token = lexerData.tokens[i];
-                if (TOKENS[token.token] != NULL)
-                        printf("Token %-6lu: %-20s | Line: %-4lu | Pos: %-4lu | Data: %s\n",
-                                i, TOKENS[token.token], token.line, token.pos, token.data);
-                else
-                        printf("Token %-6lu: %-20d | Line: %-4lu | Pos: %-4lu | Data: %s\n",
-                                i, token.token, token.line, token.pos, token.data);
-        }
+        writeTokensToOut(stdout, &metadata, &lexerData);
         // ----------------
 
-        free(src);
+        if (writeTokensToFile(&metadata, &lexerData, argv[2]) == 1)
+        {
+                fprintf(stderr, "Failed to write tokens to output file.\n");
+                for (uint64_t i = 0; i < metadata.numTokens; i++)
+                {
+                        free(lexerData.tokens[i].data);
+                }
+                free(lexerData.tokens);
+                free(metadata.filename);
+                return 1;
+        }
 
         return 0;
 }
