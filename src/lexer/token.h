@@ -124,8 +124,8 @@ enum Token
         TOK_LIT_INT,            // 123
         TOK_LIT_SINT,           // 123s
         TOK_LIT_UINT,           // 123u
-        TOK_LIT_BOOL,           // true / false
-        TOK_LIT_FLOAT,         // 0.1
+        TOK_LIT_BOOL,           // true
+        TOK_LIT_FLOAT,          // 0.1
         TOK_LIT_FLOAT32,        // 1f
         TOK_LIT_FLOAT64,        // 1d
         TOK_LIT_CHAR,           // 'a'
