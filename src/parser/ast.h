@@ -14,6 +14,14 @@ enum Ast
         AST_ELSE,
         AST_SWITCH,
         AST_CASE,
+
+
+        // --- LITERALS ---
+
+        AST_BOOL,
+        AST_INT,
+        AST_FLOAT,
+        AST_CHAR,
 };
 
 typedef struct AstNode ANode_t;
