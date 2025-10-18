@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-enum Token
+typedef enum TokenTypes
 {
         // --- KEYWORDS ---
 
@@ -136,7 +136,7 @@ enum Token
         TOK_ID,                 // variable_name
 
         TOK_META_NUM,
-};
+} TTypes_t;
 
 #define TOK_META_STR_BEGIN TOK_STR_STUB
 
@@ -145,7 +145,7 @@ extern const char* TOKENS[TOK_META_NUM];
 typedef struct LexerToken
 {
         char* data;
-        uint32_t token;
+        TTypes_t token;
         uint64_t line;
         uint64_t pos;
         uint64_t len;
