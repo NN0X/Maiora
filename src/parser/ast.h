@@ -4,14 +4,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-enum AstNodeType
+typedef enum AstNodeTypes
 {
         AST_ROOT,           // the root of the AST
         AST_FUNC_DECLARE,   // function declaration
         AST_VAR_DECLARE,    // int8 x
         AST_EXPRESSION,     // binary ops, literals
         AST_STATEMENT,      // if, while, return
-};
+} ANodeTypes_t;
 
 typedef struct AstNode ANode_t;
 
@@ -27,25 +27,25 @@ typedef struct AstNode
         void* astData;
 } ANode_t;
 
-enum Visibilities
+typedef enum VisibilityTypes
 {
         VIS_PRIVATE,
         VIS_PUBLIC,
-};
+} VTypes_t;
 
-enum LiteralTypes
+typedef enum LiteralTypes
 {
 
-};
+} LTypes_t;
 
 typedef struct AstFunctionDeclare
 {
         char* name;
         uint64_t nameLen;
 
-        uint8_t visibility;     // Visibilities
+        VTypes_t visibility;
         bool isEntry;
-        uint8_t returnType;     // LiteralTypes
+        LTypes_t returnType;
 
         ANode_t** params;
         uint64_t numParams;
@@ -54,11 +54,11 @@ typedef struct AstFunctionDeclare
         uint64_t numBody;
 } AFDec_t;
 
-enum VariableModifiers
+typedef enum VariableModifiers
 {
         VAR_ADDRESS,
         VAR_REFERENCE,
-};
+} VMods_t;
 
 // TODO: finish below
 typedef struct AstVariableDeclare
@@ -66,9 +66,9 @@ typedef struct AstVariableDeclare
         char* name;
         uint64_t nameLen;
 
-        uint8_t visibility;     // Visibilities
-        uint8_t modifier;       // VariableModifiers
-        uint8_t type;           // LiteralTypes
+        VTypes_t visibility;
+        VMods_t modifier;
+        LTypes_t type;
 
         ANode_t* initializer;
 } AVDec_t;
