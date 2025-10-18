@@ -11,13 +11,13 @@ typedef enum AstNodeTypes
         AST_VAR_DECLARE,    // int8 x
         AST_EXPRESSION,     // binary ops, literals
         AST_STATEMENT,      // if, while, return
-} ANodeTypes_t;
+} ANTypes_t;
 
 typedef struct AstNode ANode_t;
 
 typedef struct AstNode
 {
-        uint8_t type;       // AstNodeType
+        ANTypes_t type;
 
         uint64_t line;
         uint64_t pos;
@@ -35,7 +35,7 @@ typedef enum VisibilityTypes
 
 typedef enum LiteralTypes
 {
-
+        // TODO: enter types
 } LTypes_t;
 
 typedef struct AstFunctionDeclare
@@ -60,7 +60,6 @@ typedef enum VariableModifiers
         VAR_REFERENCE,
 } VMods_t;
 
-// TODO: finish below
 typedef struct AstVariableDeclare
 {
         char* name;
@@ -72,5 +71,56 @@ typedef struct AstVariableDeclare
 
         ANode_t* initializer;
 } AVDec_t;
+
+typedef enum StatementTypes
+{
+        STMT_RETURN,
+
+        STMT_IF,
+        STMT_ELSE,
+        STMT_ELIF,
+
+        STMT_FOR,
+        STMT_WHILE,
+
+        STMT_ASSIGN,
+
+        STMT_SWITCH,
+        STMT_CASE,
+} STypes_t;
+
+typedef struct AstStatement
+{
+        STypes_t type;
+        void* stmtData;
+} AStmt_t;
+
+typedef enum ExpressionTypes
+{
+        EXPR_LITERAL,   // 5s
+        EXPR_ID,        // foo
+
+        EXPR_UNARY,     // x++
+        EXPR_BINARY,    // x + y
+
+        EXPR_ARRLITERAL // [1s, 2s, 3s]
+        EXPR_ARRACCES,  // foo[0]
+
+        EXPR_MEMBACCES, // foo.a
+        EXPR_CALL,      // foo(1s)
+
+        EXPR_HEAPALLOC, // heap 1*[0s]
+        EXPR_REF,       // ref value
+
+        EXPR_INTERSTR   // ascii"num = {x}"
+
+        EXPR_PAR,       // (a + b)
+} ETypes_t;
+
+typedef struct AstExpression
+{
+        ETypes_t type;
+        void* exprData;
+} AExpr_t;
 
 #endif // AST_H
