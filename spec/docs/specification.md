@@ -2,6 +2,27 @@
 
 ## Types
 
+### Type conversion
+
+Implicit casting is disallowed, while explicit casting is:
+ - allowed when widening a compatible type (e.g., sint32 to sint64)
+ - disallowed when narrowing a compatible type (e.g., sint64 to sint32)
+ - disallowed when converting between incompatible types (e.g., sint32 to float32)
+ - disallowed when converting between signed and unsigned types (e.g., sint32 to uint32)
+
+All type conversions are allowed when used in an `unsafe` block.
+
+```maiora
+sint32 a = 42s;
+// sint16 b = sint16(a); will not compile
+sint64 b = sint64(a); // allowed
+
+unsafe
+{
+    sint16 c = sint16(a); // allowed in unsafe block
+}
+```
+
 ### none
 
 A type that represents the absence of a value. Used only in function signatures and function calls.
