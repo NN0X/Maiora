@@ -119,6 +119,8 @@ typedef enum ExpressionTypes
 
         EXPR_INTERSTR   // ascii"num = {x}"
 
+        EXPR_TYPECAST,   // (sint8)value
+
         EXPR_PAR,       // (a + b)
 } ETypes_t;
 
