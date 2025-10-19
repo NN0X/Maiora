@@ -74,6 +74,8 @@ typedef struct AstVariableDeclare
 
 typedef enum StatementTypes
 {
+        STMT_SCOPE,
+
         STMT_RETURN,
 
         STMT_IF,
@@ -81,6 +83,7 @@ typedef enum StatementTypes
         STMT_ELIF,
 
         STMT_FOR,
+        STMT_FORAN,
         STMT_WHILE,
 
         STMT_ASSIGN,
