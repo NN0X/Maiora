@@ -27,6 +27,12 @@ typedef struct AstNode
         void* astData;
 } ANode_t;
 
+typedef struct AstRoot
+{
+        ANode_t** body;
+        uint64_t bodyNum;
+} ARoot_t;
+
 typedef enum VisibilityTypes
 {
         VIS_PRIVATE,
