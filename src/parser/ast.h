@@ -119,7 +119,7 @@ typedef enum ExpressionTypes
 
         EXPR_TYPECAST,   // (sint8)value
 
-        EXPR_PAR,       // (a + b)
+        EXPR_GROUP,       // (a + b)
 } ETypes_t;
 
 typedef struct AstExpression
