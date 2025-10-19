@@ -1,8 +1,6 @@
 #ifndef STATEMENTS_H
 #define STATEMENTS_H
 
-#include <stdbool.h>
-
 #include "ast.h"
 
 typedef struct AstScopeStatement
