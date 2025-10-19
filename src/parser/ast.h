@@ -76,6 +76,8 @@ typedef enum StatementTypes
 {
         STMT_SCOPE,
 
+        STMT_UNSAFE,
+
         STMT_RETURN,
 
         STMT_IF,

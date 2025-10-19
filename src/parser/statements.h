@@ -9,6 +9,11 @@ typedef struct AstScopeStatement
         uint64_t bodyNum;
 } AScpStmt_t;
 
+typedef struct AstUnsafeStatement
+{
+        ANode_t* body;
+} AUsfStmt_t;
+
 typedef struct AstReturnStatement
 {
         ANode_t* value;
