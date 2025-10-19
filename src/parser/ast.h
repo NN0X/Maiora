@@ -45,13 +45,11 @@ typedef struct AstFunctionDeclare
 
         VTypes_t visibility;
         bool isEntry;
+        ANode_t* body;
         LTypes_t returnType;
 
         ANode_t** params;
         uint64_t numParams;
-
-        ANode_t** body;
-        uint64_t numBody;
 } AFDec_t;
 
 typedef enum VariableModifiers
