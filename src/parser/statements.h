@@ -24,8 +24,8 @@ typedef struct AstIfStatement
         ANode_t* condition;
         ANode_t* body;
 
-        ANode_t** else;
-        uint64_t numElse;
+        ANode_t** els;
+        uint64_t numEls;
 } AIfStmt_t;
 
 typedef struct AstElseStatement

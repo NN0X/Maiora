@@ -41,7 +41,24 @@ typedef enum VisibilityTypes
 
 typedef enum LiteralTypes
 {
-        // TODO: enter types
+        LIT_SINT8,         // sint8
+        LIT_SINT16,        // sint16
+        LIT_SINT32,        // sint32
+        LIT_SINT64,        // sint64
+        LIT_UINT8,         // uint8
+        LIT_UINT16,        // uint16
+        LIT_UINT32,        // uint32
+        LIT_UINT64,        // uint64
+
+        // floats
+        LIT_FLOAT8,        // float8
+        LIT_FLOAT16,       // float16
+        LIT_FLOAT32,       // float32
+        LIT_FLOAT64,       // float64
+
+        // characters
+        LIT_ASCII,         // ascii
+        LIT_UTF8,          // utf8
 } LTypes_t;
 
 typedef struct AstFunctionDeclare
@@ -112,7 +129,7 @@ typedef enum ExpressionTypes
         EXPR_UNARY,     // x++
         EXPR_BINARY,    // x + y
 
-        EXPR_ARRLITERAL // [1s, 2s, 3s]
+        EXPR_ARRLITERAL,// [1s, 2s, 3s]
         EXPR_ARRACCES,  // foo[0]
 
         EXPR_MEMBACCES, // foo.a
@@ -121,11 +138,11 @@ typedef enum ExpressionTypes
         EXPR_HEAPALLOC, // heap 1*[0s]
         EXPR_REF,       // ref value
 
-        EXPR_INTERSTR   // ascii"num = {x}"
+        EXPR_INTERSTR,  // ascii"num = {x}"
 
-        EXPR_TYPECAST,   // (sint8)value
+        EXPR_TYPECAST,  // (sint8)value
 
-        EXPR_GROUP,       // (a + b)
+        EXPR_GROUP,     // (a + b)
 } ETypes_t;
 
 typedef struct AstExpression
