@@ -61,6 +61,10 @@ typedef enum LiteralTypes
         LIT_UTF8,          // utf8
 } LTypes_t;
 
+#define LARGEST_LIT_INT_TYPE LIT_SINT64
+#define LARGEST_LIT_FLOAT_TYPE LIT_FLOAT64
+#define LARGEST_LIT_CHAR_TYPE LIT_UTF8
+
 typedef struct AstFunctionDeclare
 {
         char* name;
@@ -150,5 +154,7 @@ typedef struct AstExpression
         ETypes_t type;
         void* exprData;
 } AExpr_t;
+
+int generateAST(char* src, ANode_t* root);
 
 #endif // AST_H
