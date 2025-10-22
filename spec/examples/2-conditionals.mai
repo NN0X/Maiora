@@ -43,7 +43,7 @@ entry sint32 main(none)
                         print("a is 5\n");
                 case 10s:
                         print("a is 10\n");
-                default:
+                else:
                         print("a is neither 5 nor 10\n");
         }
 

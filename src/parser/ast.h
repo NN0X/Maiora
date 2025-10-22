@@ -117,6 +117,7 @@ typedef enum StatementTypes
 
         STMT_SWITCH,
         STMT_CASE,
+        STMT_SWELSE,
 } STypes_t;
 
 typedef struct AstStatement

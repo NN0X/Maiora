@@ -79,4 +79,9 @@ typedef struct AstCaseStatement
         ANode_t* body;
 } ACasStmt_t;
 
+typedef struct AstSwitchElseStatement
+{
+        ANode_t* body;
+} ASwElStmt_t;
+
 #endif // STATEMENTS_H
