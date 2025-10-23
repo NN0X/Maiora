@@ -35,6 +35,9 @@ typedef enum TokenTypes
         TOK_KEYW_SWITCH,        // switch
         TOK_KEYW_CASE,          // case
 
+        // block management
+        TOK_KEYW_UNSAFE,        // unsafe
+        TOK_KEYW_ASM,           // asm
 
         // --- OPERATORS ---
 
