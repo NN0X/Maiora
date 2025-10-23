@@ -24,6 +24,9 @@ const char* TOKENS[TOK_META_NUM] = {
         [TOK_KEYW_SWITCH] = "switch",
         [TOK_KEYW_CASE] = "case",
 
+        [TOK_KEYW_UNSAFE] = "unsafe",
+        [TOK_KEYW_ASM] = "asm",
+
         [TOK_OP_EQUALS] = "==",
         [TOK_OP_LESS] = "<",
         [TOK_OP_MORE] = ">",
