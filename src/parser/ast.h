@@ -102,6 +102,7 @@ typedef enum StatementTypes
         STMT_SCOPE,
 
         STMT_UNSAFE,
+        STMT_ASM,
 
         STMT_RETURN,
 
