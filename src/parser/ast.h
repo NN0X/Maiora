@@ -4,8 +4,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "../lexer/lexer.h"
+
 typedef enum AstNodeTypes
 {
+        AST_INVALID = -1,
         AST_ROOT,           // the root of the AST
         AST_FUNC_DECLARE,   // function declaration
         AST_VAR_DECLARE,    // int8 x
@@ -29,7 +32,7 @@ typedef struct AstNode
 
 typedef struct AstRoot
 {
-        ANode_t** body;
+        ANode_t* body;
         uint64_t bodyNum;
 } ARoot_t;
 
@@ -75,7 +78,7 @@ typedef struct AstFunctionDeclare
         ANode_t* body;
         LTypes_t returnType;
 
-        ANode_t** params;
+        ANode_t* params;
         uint64_t numParams;
 } AFDec_t;
 
@@ -157,6 +160,6 @@ typedef struct AstExpression
         void* exprData;
 } AExpr_t;
 
-int generateAST(char* src, ANode_t* root);
+int generateAST(LData_t lexerData, uint64_t numTokens, ANode_t* root);
 
 #endif // AST_H

@@ -5,7 +5,7 @@
 
 typedef struct AstScopeStatement
 {
-        ANode_t** body;
+        ANode_t* body;
         uint64_t bodyNum;
 } AScpStmt_t;
 
@@ -24,7 +24,7 @@ typedef struct AstIfStatement
         ANode_t* condition;
         ANode_t* body;
 
-        ANode_t** els;
+        ANode_t* els;
         uint64_t numEls;
 } AIfStmt_t;
 
@@ -70,7 +70,7 @@ typedef struct AstSwitchStatement
 {
         ANode_t* switcher;
 
-        ANode_t** cases;
+        ANode_t* cases;
         uint64_t casesNum;
 } ASwiStmt_t;
 

@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "../defines.h"
 #include "token.h"
 #include "lexer.h"
 #include "loader.h"

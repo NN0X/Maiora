@@ -88,7 +88,7 @@ typedef struct AstFunctionCallExpression
 {
         ANode_t* target;
 
-        ANode_t** parameters;
+        ANode_t* parameters;
         uint64_t parametersNum;
 } AFCallExpr_t;
 
@@ -107,7 +107,7 @@ typedef struct AstReferenceExpression
 typedef struct AstInterpolatedStringExpression
 {
         LTypes_t type;
-        ANode_t** body;     // "num = {x}" -> 'n', 'u', 'm', ' ', '=', ' ', x
+        ANode_t* body;     // "num = {x}" -> 'n', 'u', 'm', ' ', '=', ' ', x
         uint64_t bodyNum;
 } AIntrStrExpr_t;
 
@@ -119,7 +119,7 @@ typedef struct AstTypeCastExpression
 
 typedef struct AstGroupExpression
 {
-        ANode_t** body;
+        ANode_t* body;
         uint64_t bodyNum;
 } AGrpExpr_t;
 

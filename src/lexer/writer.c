@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../defines.h"
 #include "lexer.h"
 #include "loader.h"
 #include "writer.h"

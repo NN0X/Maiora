@@ -1,0 +1,7 @@
+#ifndef DEFINES_H
+#define DEFINES_H
+
+#define MAX_FILE_NAME_LEN 1024
+#define MAX_STATEMENT_LEN 1024
+
+#endif // DEFINES_H

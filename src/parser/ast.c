@@ -1,9 +1,9 @@
 #include "ast.h"
-#include "lexer.h"
+#include "../lexer/lexer.h"
 
-int decideNodeType(LTok_t token)
+ANTypes_t decideNodeType(LTok_t token)
 {
-        return -1;
+        return AST_INVALID;
 }
 
 int generateAST(LData_t lexerData, uint64_t numTokens, ANode_t* root)
