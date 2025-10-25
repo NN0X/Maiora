@@ -8,4 +8,6 @@ ANTypes_t decideNodeType(LTok_t token)
 
 int generateAST(LData_t lexerData, uint64_t numTokens, ANode_t* root)
 {
+
+        return 0;
 }
