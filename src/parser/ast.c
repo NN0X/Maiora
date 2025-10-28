@@ -59,6 +59,27 @@ int generateASTPass(LData_t lexerData, uint64_t numTokens, ANode_t* root)
                         fprintf(stderr, "Invalid AST Node");
                         return 1;
                 }
+
+                switch (nodeType)
+                {
+                        case AST_FUNC_DECL:
+                                // INFO: create function declaration node and attach to root
+                                break;
+                        case AST_VAR_DECL:
+                                // INFO: create variable declaration node and attach to root
+                                break;
+                        case AST_STATEMENT:
+                                // INFO: create statement node and attach to root
+                                break;
+                        case AST_EXPRESSION:
+                                // INFO: create expression node and attach to root
+                                break;
+                        default:
+                                fprintf(stderr, "Unhandled AST Node Type.\n");
+                                return 1;
+                }
+
+
                 pos = end;
         }
 
