@@ -160,6 +160,6 @@ typedef struct AstExpression
         void* exprData;
 } AExpr_t;
 
-int generateAST(LData_t lexerData, uint64_t numTokens, ANode_t* root);
+int generateAST(LData_t lexerData, ANode_t* root);
 
 #endif // AST_H

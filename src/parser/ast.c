@@ -36,9 +36,10 @@ ANTypes_t decideNodeType(uint64_t pos, LTok_t* tokens, uint64_t numTokens)
         return AST_INVALID;
 }
 
-int generateASTPass(LData_t lexerData, uint64_t numTokens, ANode_t* root)
+int generateASTPass(LData_t lexerData, ANode_t* root)
 {
         uint64_t pos = 0;
+        uint64_t numTokens = lexerData.metadata.numTokens;
         while (pos != numTokens)
         {
                 uint64_t end;
@@ -56,7 +57,7 @@ int generateASTPass(LData_t lexerData, uint64_t numTokens, ANode_t* root)
                 ANTypes_t nodeType = decideNodeType(pos, lexerData.tokens, end);
                 if (nodeType == AST_INVALID)
                 {
-                        fprintf(stderr, "Invalid AST Node");
+                        fprintf(stderr, "Invalid AST Node.\n");
                         return 1;
                 }
 
@@ -92,7 +93,7 @@ int getASTSize(uint64_t* size, ANode_t* root)
         return 0;
 }
 
-int generateAST(LData_t lexerData, uint64_t numTokens, ANode_t* root)
+int generateAST(LData_t lexerData, ANode_t* root)
 {
         // INFO: call generateASTPass until no changes are made
 
@@ -101,7 +102,7 @@ int generateAST(LData_t lexerData, uint64_t numTokens, ANode_t* root)
         while (size != prevSize)
         {
                 prevSize = size;
-                if (generateASTPass(lexerData, numTokens, root) == 1)
+                if (generateASTPass(lexerData, root) == 1)
                 {
                         fprintf(stderr, "Failed to generate AST.\n");
                         return 1;
