@@ -471,3 +471,53 @@ Why pass functions with instance keyword and not function keyword?
 When passing instance as arguments it conveys another information that can be used before calling the function.
 So in conclusion, when passing a function only to call it the better way is to use function keyword.
 When passing a function to be used as a data object, the better way is to use instance keyword.
+
+
+### blocks
+
+#### unsafe
+
+The `unsafe` block is used to encapsulate code that would otherwise be disallowed by the Maiora type system. This includes operations such as type casting between incompatible types, pointer arithmetic, and direct memory manipulation.
+
+Example of using `unsafe` block:
+```maiora
+entry sint64 main(none)
+{
+    sint64 a = 42s;
+    float64 b = 0.0f;
+
+    unsafe
+    {
+        b = float64(a);
+    }
+
+    IO::print(ascii"Value of b: {b}");
+
+    return 0s;
+}
+```
+
+#### asm
+
+The `asm` block is used to include inline assembly code within Maiora programs. This allows for low-level operations and optimizations that are not directly supported by the Maiora language.
+
+Example of using `asm` block:
+```maiora
+entry sint64 main(none)
+{
+    sint64 result = 0s;
+
+    asm
+    {
+        // Example assembly code (syntax may vary based on target architecture)
+        mov rax, 5
+        mov rbx, 10
+        add rax, rbx
+        mov result, rax
+    }
+
+    IO::print(ascii"Result of assembly addition: {result}");
+
+    return 0s;
+}
+```
