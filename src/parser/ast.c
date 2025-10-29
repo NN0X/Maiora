@@ -62,10 +62,10 @@ int generateASTPass(LData_t lexerData, uint64_t numTokens, ANode_t* root)
 
                 switch (nodeType)
                 {
-                        case AST_FUNC_DECL:
+                        case AST_FUNC_DECLARE:
                                 // INFO: create function declaration node and attach to root
                                 break;
-                        case AST_VAR_DECL:
+                        case AST_VAR_DECLARE:
                                 // INFO: create variable declaration node and attach to root
                                 break;
                         case AST_STATEMENT:

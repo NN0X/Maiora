@@ -5,7 +5,7 @@
 #include "../defines.h"
 #include "../lexer/lexer.h"
 
-int loadTokensFromFile(LMeta_t* metadata, LData_t* lexerData, const char* filename)
+int loadTokensFromFile(LData_t* lexerData, const char* filename)
 {
         uint64_t nameSize = strlen(filename);
         if (nameSize == 0)
@@ -52,22 +52,50 @@ int loadTokensFromFile(LMeta_t* metadata, LData_t* lexerData, const char* filena
 
         fseek(inFile, 0, SEEK_SET);
 
+        LMeta_t metadata;
+
         uint64_t srcFilenameLen;
         fread(&srcFilenameLen, sizeof(uint64_t), 1, inFile);
-        fread(metadata->filename, sizeof(char), srcFilenameLen, inFile);
-        fread(&metadata->fileSize, sizeof(uint64_t), 1, inFile);
-        fread(&metadata->numTokens, sizeof(uint64_t), 1, inFile);
-        for (uint64_t i = 0; i < metadata->numTokens; i++)
+
+        metadata.filename = (char*)malloc(srcFilenameLen);
+        if (metadata.filename == NULL)
+        {
+                fprintf(stderr, "malloc failed for metadata.filename.\n");
+                return 1;
+        }
+        fread(metadata.filename, sizeof(char), srcFilenameLen, inFile);
+        fread(&metadata.fileSize, sizeof(uint64_t), 1, inFile);
+        fread(&metadata.numTokens, sizeof(uint64_t), 1, inFile);
+        metadata.fileSize = srcFilenameLen;
+
+        lexerData->tokens = (LTok_t*)malloc(sizeof(LTok_t) * MAX_STATEMENT_LEN);
+        if (lexerData->tokens == NULL)
+        {
+                fprintf(stderr, "malloc for lexerData->tokens failed.\n");
+                return 1;
+        }
+
+        for (uint64_t i = 0; i < metadata.numTokens; i++)
         {
                 LTok_t token;
                 fread(&token.token, sizeof(uint32_t), 1, inFile);
                 fread(&token.line, sizeof(uint64_t), 1, inFile);
                 fread(&token.pos, sizeof(uint64_t), 1, inFile);
                 fread(&token.len, sizeof(uint64_t), 1, inFile);
+
+                token.data = (char*)malloc(token.len);
+                if (token.data == NULL)
+                {
+                        fprintf(stderr, "malloc for token.data failed.\n");
+                        return 1;
+                }
                 fread(token.data, sizeof(char), token.len, inFile);
-                // TODO: write to lexer data
+
+                lexerData->tokens[i] = token;
         }
         fclose(inFile);
+
+        lexerData->metadata = metadata;
 
         return 0;
 }
