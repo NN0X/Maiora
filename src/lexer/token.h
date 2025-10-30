@@ -5,6 +5,8 @@
 
 typedef enum TokenTypes
 {
+        TOK_INVALID = -1,
+
         // --- KEYWORDS ---
 
         TOK_KEYW_RETURN = 0,    // return

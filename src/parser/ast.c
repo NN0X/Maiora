@@ -28,58 +28,97 @@ int getGroup(uint64_t* end, LTok_t* tokens, uint64_t numTokens, uint64_t pos)
         return 0;
 }
 
-ANTypes_t decideNodeType(uint64_t pos, LTok_t* tokens, uint64_t end)
+ANTypes_t decideNodeType(bool* isNextChild, uint64_t pos, LTok_t* tokens, uint64_t end)
 {
-        // INFO: starts with public/private/entry and contains ( -> function declaration
-        // INFO: starts with public/private or type and contains = -> variable declaration
-        // INFO: check if it's a statement
-        // INFO: if none of the above, it's an expression
-        bool containsAccModifier = false;       // public, private
-        bool containsEntry = false;             // entry
-        bool containsLeftPar = false;           // (
-        bool containsEq = false;                // =
+        // INFO: function declaration rules:
+        // 1. starts with public/private/entry and contains ( -> entry none main(none) {}
+        // INFO: variable declaration rules:
+        // 1. starts with public/private and contains = -> private sint32 a = 1s;
+        // 2. starts with type and contains = -> sint32 a = 1s;
+        // 3. contains keyword instance and contains = -> private instance foo1 = foo(none);
+        // 4. contains keyword function and contains = -> private function foo1 = foo;
+        // INFO: statement rules:
+        // 1. 
+        // INFO: expression rules:
+        //
+        *isNextChild = false;
+
+        bool startsAccModifier = false;
+        bool startsEntry = false;
+        bool startsVarType = false;
+        bool containsLeftPar = false;
+        bool containsAssign = false;
+        bool containsInstance = false;
+        bool containsFunction = false;
+
+        TTypes_t firstTok = tokens[pos].token;
+        while(firstTok == TOK_SPACE)
+        {
+                firstTok = tokens[++pos].token;
+        }
+        switch (firstTok)
+        {
+                case TOK_KEYW_PUBLIC:
+                case TOK_KEYW_PRIVATE:
+                        startsAccModifier = true;
+                        break;
+                case TOK_KEYW_ENTRY:
+                        startsEntry = true;
+                        break;
+                default:
+                        if (firstTok >= TOK_TYPE_BOOL && firstTok <= TOK_TYPE_UTF8)
+                        {
+                                startsVarType = true;
+                        }
+                        break;
+        }
 
         for (uint64_t i = pos; i < end; i++)
         {
-                switch (tokens[i].token)
+                TTypes_t token = tokens[i].token;
+                switch (token)
                 {
-                        case TOK_KEYW_PUBLIC:
-                        case TOK_KEYW_PRIVATE:
-                                containsAccModifier = true;
-                                break;
-                        case TOK_KEYW_ENTRY:
-                                containsEntry = true;
-                                break;
                         case TOK_OP_LPAR:
                                 containsLeftPar = true;
                                 break;
                         case TOK_OP_ASSIGN:
-                                containsEq = true;
+                                containsAssign = true;
+                                break;
+                        case TOK_KEYW_INSTANCE:
+                                containsInstance = true;
+                                break;
+                        case TOK_KEYW_FUNCTION:
+                                containsFunction = true;
                                 break;
                         default:
                                 break;
                 }
         }
 
-        if (containsEntry)
+        if (startsEntry)
         {
-                printf("entry func decl.\n");
                 return AST_FUNC_DECLARE;
         }
-        else if (containsAccModifier && containsLeftPar)
+        if (startsAccModifier && containsLeftPar)
         {
-                printf("func decl.\n");
                 return AST_FUNC_DECLARE;
         }
-        else if (containsAccModifier && containsEq)
+
+        if (startsAccModifier && containsAssign)
         {
-                printf("var decl.\n");
                 return AST_VAR_DECLARE;
         }
-        else
+        if (startsVarType && containsAssign)
         {
-                printf("stmt/expr.\n");
-                return AST_EXPRESSION;
+                return AST_VAR_DECLARE;
+        }
+        if (containsInstance && containsAssign)
+        {
+                return AST_VAR_DECLARE;
+        }
+        if (containsFunction && containsAssign)
+        {
+                return AST_VAR_DECLARE;
         }
 
         return AST_INVALID;
@@ -89,6 +128,8 @@ int generateASTPass(LData_t lexerData, ANode_t* root)
 {
         uint64_t pos = 0;
         uint64_t numTokens = lexerData.metadata.numTokens;
+
+        bool isNextChild = false;
         while (pos != numTokens)
         {
                 uint64_t end;
@@ -100,14 +141,19 @@ int generateASTPass(LData_t lexerData, ANode_t* root)
 
                 if (end == pos)
                 {
+                        printf("end == pos\n");
                         break;
                 }
 
-                ANTypes_t nodeType = decideNodeType(pos, lexerData.tokens, end);
+                ANTypes_t nodeType = decideNodeType(&isNextChild, pos, lexerData.tokens, end);
                 if (nodeType == AST_INVALID)
                 {
                         fprintf(stderr, "Invalid AST Node.\n");
                         return 1;
+                }
+                else
+                {
+                        printf("Detected AST Node: %d.\n", nodeType);
                 }
 
                 switch (nodeType)
@@ -128,7 +174,6 @@ int generateASTPass(LData_t lexerData, ANode_t* root)
                                 fprintf(stderr, "Unhandled AST Node Type.\n");
                                 return 1;
                 }
-
 
                 pos = end;
         }
