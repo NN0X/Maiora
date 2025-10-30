@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdbool.h>
 
 #include "ast.h"
 #include "../lexer/lexer.h"
@@ -17,7 +18,7 @@ int getGroup(uint64_t* end, LTok_t* tokens, uint64_t numTokens, uint64_t pos)
                 currPos++;
         }
 
-        if (*end + 1 == numTokens && tokens[currPos].token != TOK_OP_RCURLY)
+        if (*end + 1 == numTokens && tokens[currPos - 1].token != TOK_OP_RCURLY)
         {
                 fprintf(stderr, "Missing closing bracket.\n");
                 return 1;
@@ -27,12 +28,62 @@ int getGroup(uint64_t* end, LTok_t* tokens, uint64_t numTokens, uint64_t pos)
         return 0;
 }
 
-ANTypes_t decideNodeType(uint64_t pos, LTok_t* tokens, uint64_t numTokens)
+ANTypes_t decideNodeType(uint64_t pos, LTok_t* tokens, uint64_t end)
 {
         // INFO: starts with public/private/entry and contains ( -> function declaration
         // INFO: starts with public/private or type and contains = -> variable declaration
         // INFO: check if it's a statement
         // INFO: if none of the above, it's an expression
+        bool containsAccModifier = false;       // public, private
+        bool containsEntry = false;             // entry
+        bool containsLeftPar = false;           // (
+        bool containsEq = false;                // =
+
+        for (uint64_t i = pos; i < end; i++)
+        {
+                printf("token: %s | accMod: %d | ent: %d | lpar: %d | eq: %d\n",
+                       tokens[i].data, containsAccModifier, containsEntry, containsLeftPar, containsEq);
+                switch (tokens[i].token)
+                {
+                        case TOK_KEYW_PUBLIC:
+                        case TOK_KEYW_PRIVATE:
+                                containsAccModifier = true;
+                                break;
+                        case TOK_KEYW_ENTRY:
+                                containsEntry = true;
+                                break;
+                        case TOK_OP_LPAR:
+                                containsLeftPar = true;
+                                break;
+                        case TOK_OP_ASSIGN:
+                                containsEq = true;
+                                break;
+                        default:
+                                break;
+                }
+        }
+
+        if (containsEntry)
+        {
+                printf("entry func decl.\n");
+                return AST_FUNC_DECLARE;
+        }
+        else if (containsAccModifier && containsLeftPar)
+        {
+                printf("func decl.\n");
+                return AST_FUNC_DECLARE;
+        }
+        else if (containsAccModifier && containsEq)
+        {
+                printf("var decl.\n");
+                return AST_VAR_DECLARE;
+        }
+        else
+        {
+                printf("stmt/expr.\n");
+                return AST_EXPRESSION;
+        }
+
         return AST_INVALID;
 }
 
