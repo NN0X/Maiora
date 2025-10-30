@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "loadTokensFromFile failed.\n");
                 return 1;
         }
-        printf("Number of tokens: %lu", lexerData.metadata.numTokens);
+        printf("Number of tokens: %lu\n", lexerData.metadata.numTokens);
 
         ANode_t root;
         root.type = AST_ROOT;

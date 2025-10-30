@@ -41,8 +41,6 @@ ANTypes_t decideNodeType(uint64_t pos, LTok_t* tokens, uint64_t end)
 
         for (uint64_t i = pos; i < end; i++)
         {
-                printf("token: %s | accMod: %d | ent: %d | lpar: %d | eq: %d\n",
-                       tokens[i].data, containsAccModifier, containsEntry, containsLeftPar, containsEq);
                 switch (tokens[i].token)
                 {
                         case TOK_KEYW_PUBLIC:
