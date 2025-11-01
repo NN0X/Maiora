@@ -1,8 +1,51 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include "ast.h"
+#include "../lexer/lexer.h"
+#include "../lexer/token.h"
 
+int splitByScope(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint64_t begin, uint64_t end)
+{
+        // TODO: find { and correlated } then write their positions into indexes
+        return 0;
+}
+
+int splitByColon(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes)
+{
+        return 0;
+}
+
+int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
+{
+        return 0;
+}
+
+int generateAST(LData_t lexerData, ANode_t* root)
+{
+        uint64_t begin = 0;
+        uint64_t end = lexerData.metadata.numTokens;
+
+        uint64_t* indexes = (uint64_t*)malloc(end * sizeof(uint64_t));
+        if (indexes == NULL)
+        {
+                fprintf(stderr, "malloc failed for indexes.\n");
+                return 1;
+        }
+
+        while (begin != end)
+        {
+                uint64_t numIndexes = 0;
+                if (splitByScope(lexerData.tokens, indexes, &numIndexes, begin, end) != 0)
+                {
+                        fprintf(stderr, "splitByScope failed.\n");
+                        return 1;
+                }
+        }
+
+        return 0;
+}
 
 // INFO: PLAN:
 // 1. split tokens into groups by scopes
