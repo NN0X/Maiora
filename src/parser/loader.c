@@ -51,6 +51,14 @@ int loadTokensFromFile(LData_t* lexerData, const char* filename)
         }
 
         fseek(inFile, 0, SEEK_SET);
+        uint64_t lexerVersion;
+        fread(&lexerVersion, sizeof(uint64_t), 1, inFile);
+        if (lexerVersion != (uint64_t)LEXER_VERSION)
+        {
+                fprintf(stderr, "Lexer version mismatch: expected %lu, got %lu\n", (uint64_t)LEXER_VERSION, lexerVersion);
+                fclose(inFile);
+                return 1;
+        }
 
         LMeta_t metadata;
 

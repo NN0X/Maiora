@@ -18,11 +18,11 @@ int main(int argc, char *argv[])
 
         ANode_t root;
         root.type = AST_ROOT;
-        if (generateAST(lexerData, &root) == 1)
-        {
-                fprintf(stderr, "generateAST failed.\n");
-                return 1;
-        }
+        //if (generateAST(lexerData, &root) == 1)
+        //{
+        //        fprintf(stderr, "generateAST failed.\n");
+        //        return 1;
+        //}
 
         return 0;
 }
