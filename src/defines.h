@@ -1,6 +1,9 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
+#define LEXER_VERSION 1
+#define PARSER_VERSION 1
+
 #define MAX_FILE_NAME_LEN 1024
 #define MAX_STATEMENT_LEN 1024
 

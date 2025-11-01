@@ -50,13 +50,14 @@ int writeTokensToFile(LMeta_t* metadata, LData_t* lexerData, const char* filenam
                 return 1;
         }
 
+        fwrite(&(uint64_t){LEXER_VERSION}, sizeof(uint64_t), 1, outFile);
         uint64_t srcFilenameLen = strlen(metadata->filename);
         fwrite(&srcFilenameLen, sizeof(uint64_t), 1, outFile);
         fwrite(metadata->filename, sizeof(char), srcFilenameLen, outFile);
         fwrite(&metadata->fileSize, sizeof(uint64_t), 1, outFile);
         fwrite(&metadata->numTokens, sizeof(uint64_t), 1, outFile);
 
-        int64_t expectedOutputSize = sizeof(int64_t) + sizeof(uint64_t) + srcFilenameLen * sizeof(char) + sizeof(uint64_t) + sizeof(uint64_t);
+        int64_t expectedOutputSize = sizeof(uint64_t) + sizeof(int64_t) + sizeof(uint64_t) + srcFilenameLen * sizeof(char) + sizeof(uint64_t) + sizeof(uint64_t);
         for (uint64_t i = 0; i < metadata->numTokens; i++)
         {
                 LTok_t token = lexerData->tokens[i];
