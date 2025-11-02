@@ -1,0 +1,65 @@
+#import IO
+#import Types.string
+
+public none foo(sint64 enum Names)
+{
+        IO::print(Names.EN_2); // prints '2'
+}
+
+public none struct(none)
+{
+        public string str = ("string");
+        public sint32 id = 0;
+}
+
+public none class(sint32 pid, string pstr)
+{
+        private string str = pstr;
+        private sint32 id = pid;
+
+        public none setString(string newStr)
+        {
+                str = newStr;
+        }
+
+        public none setID(sint32 newID)
+        {
+                id = newID;
+        }
+
+        public string getString(none)
+        {
+                return str;
+        }
+
+        public sint32 getID(none)
+        {
+                return id;
+        }
+}
+
+entry sint32 main(none)
+{
+        sint64 enum Names
+        {
+            EN_0 = 0,
+            EN_1,
+            EN_2,
+            EN_3
+        }
+
+        foo(Names);
+
+        struct strStruct = (none);
+        IO::print(strStruct.str); // prints "string"
+        IO::print(strStruct.id);  // prints '0'
+        strStruct.id = 5s;
+        IO::print(strStruct.id);  // prints '5'
+
+        string str = ("string");
+        class strClass = (2s, str);
+        IO::print(strClass.getString(none)) // prints "string"
+        string str2 = ("string2");
+        strClass.setString(str2);
+        IO::print(strClass.getString(none)) // prints "string2"
+}
