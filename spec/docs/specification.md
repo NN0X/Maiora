@@ -110,7 +110,7 @@ private sint64 printInt(sint64 value)
 }
 ```
 
-### float16, float32, float64
+### float8, float16, float32, float64
 
 Floating-point types of various sizes. Used for representing real numbers with fractional parts.
 
@@ -178,6 +178,8 @@ When using double quotes, the value is converted to two variables: array of asci
 
 
 ### utf
+
+Same as ascii but allows for UTF-8 characters.
 
 ## Keywords
 
@@ -278,9 +280,37 @@ entry sint64 main(none)
 Above code will not compile, because globalVariable is not attached to any function instance.
 
 
+### enum
+
+```maiora
+#import IO
+
+public none foo(sint32 enum Colors)
+{
+        IO::print(ascii"Color value: {Colors.COLOR_RED}");
+}
+
+entry sint32 main(none)
+{
+        sint32 enum Colors
+        {
+                COLOR_RED = 0,
+                COLOR_GREEN,
+                COLOR_BLUE,
+                COLOR_BLACK = 100
+        }
+
+        foo(Colors);
+
+        return 0s;
+}
+```
+
+### function
+
 ### instance
 
-The instance keyword is used to create an instance of a function. This allows assigning a function instance to a variable. When declaring a variable with the instance keyword the variable will NOT take the return value of the function, but rather the function itself. This means that the variable can be used to use the function as a data object like a C structure or C++ class.
+The instance keyword is used to create an instance of a function. This allows assigning a function instance to a variable. When declaring a variable with the instance keyword the variable will NOT take the return value of the function, but rather the function itself. This means that the variable can be used to use the function as a data object like a C structure or C++ class. All instances are allocated on the heap and follow the same rules as addresses.
 
 Example of using instance keyword:
 ```maiora
@@ -350,10 +380,6 @@ entry sint64 main(none)
     // REMINDER: ascii"Hello, Maiora!" colapses to ascii[] and uint64 size automatically
 }
 ```
-
-### strong
-
-The strong keyword is used to define a function that cannot be called with `none` as an argument. This is useful for functions that require specific arguments to operate correctly and should not be called without them.
 
 ## Key concepts
 
@@ -477,7 +503,7 @@ When passing a function to be used as a data object, the better way is to use in
 
 #### unsafe
 
-The `unsafe` block is used to encapsulate code that would otherwise be disallowed by the Maiora type system. This includes operations such as type casting between incompatible types, pointer arithmetic, and direct memory manipulation.
+The `unsafe` block is used to encapsulate code that would otherwise be disallowed by the Maiora Safety System. This includes operations such as type casting between incompatible types, pointer arithmetic, and direct memory manipulation.
 
 Example of using `unsafe` block:
 ```maiora
@@ -499,7 +525,7 @@ entry sint64 main(none)
 
 #### asm
 
-The `asm` block is used to include inline assembly code within Maiora programs. This allows for low-level operations and optimizations that are not directly supported by the Maiora language.
+The `asm` block is used to include inline assembly code within Maiora programs. This allows for low-level operations and optimizations that are not directly supported by the Maiora language. `asm` is implicitly unsafe.
 
 Example of using `asm` block:
 ```maiora
