@@ -57,7 +57,7 @@ This is because Maiora can be run in an interpreter where existence of a variabl
 In the interpreters that are compatible with Maiora Specification, the default behavior for such cases is to engage emergency handler that will add the function to backlog and execute it later when the required arguments are available.
 
 ```maiora
-#import Types.string;
+#import Types.string
 
 private none foo1(instance message)
 {
@@ -381,6 +381,18 @@ entry sint64 main(none)
 }
 ```
 
+#### Instance implicit fields
+
+All instances in Maiora have implicit fields that can be accessed using the dot notation. These fields provide additional information about the instance and can be used for various purposes.
+
+The implicit fields are:
+
+ - `return` - holds the return value of the function if it has one. (type depends on the function return type)
+ - `error` - holds error information if the function encountered an error during execution. (uint64)
+ - `call` - function that calling the instance function directly. (function <instance return type> <instance args types>)
+ - `address` - holds the memory address of the instance. (address)
+ - `size` - holds the size of the instance in bytes. (uint64)
+
 ## Key concepts
 
 ### Functions as data objects
@@ -545,5 +557,58 @@ entry sint64 main(none)
     IO::print(ascii"Result of assembly addition: {result}");
 
     return 0s;
+}
+```
+
+## Error handling
+
+Maiora does not have any `try-catch` or similar constructs for error handling. Instead the canonical way to get error information is through instance implicit fields.
+Example of error handling using implicit fields:
+```maiora
+#import IO
+
+private sint64 foo(sint64 a)
+{
+        return 1s / a; // This will cause a division by zero error
+}
+
+entry sint32 main(none)
+{
+        instance foo1 = foo(0);
+        if (foo1.error)
+        {
+                IO::print(ascii"Error occurred: {foo1.error}");
+        }
+
+        instance foo2 = foo(2s);
+        IO::print(ascii"Foo executed successfully with result: {foo1.return}");
+
+        return 0s;
+}
+```
+
+foo1.error type is uint64. To get the meaning of the error code use Error module.
+
+```maiora
+#import IO
+#import Error
+
+private sint64 foo(sint64 a)
+{
+        return 1s / a; // This will cause a division by zero error
+}
+
+entry sint32 main(none)
+{
+        instance foo1 = foo(0);
+        if (foo1.error)
+        {
+                IO::print(ascii"Error occurred: {Error::errorMessage(foo1.error)}");
+        }
+
+        instance foo2 = foo(2s);
+        IO::print(ascii"Foo executed successfully with result: {foo2.return}");
+
+        return 0s;
 }
 ```
