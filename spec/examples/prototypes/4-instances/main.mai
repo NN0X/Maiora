@@ -67,3 +67,6 @@ entry sint64 main(none)
         // printMockStr(foo1); <- will not work because foo1 is not an instance of stringMock function
         // printMockStr(foo2); <- same as above
 }
+
+// INFO: if instance is passed to a function it's always borrowed (not copied)
+// INFO: instances cannot be returned from functions
