@@ -1,0 +1,66 @@
+#import IO.print
+
+public none foo1(none)
+{
+        print("a");
+}
+
+public none foo2(none)
+{
+        print("b");
+}
+
+public sint32 fooTyped(none)
+{
+        print("c");
+
+        return 0s;
+}
+
+public function fooCond1(sint8 pcondition)
+{
+        if (condition == 0)
+        {
+                return foo1;
+        }
+        else
+        {
+                return foo2;
+        }
+}
+
+public function fooCond2(sint8 pcondition)
+{
+        if (condition == 0)
+        {
+                return foo1;
+        }
+        else
+        {
+                return fooTyped;
+        }
+}
+
+entry sint32 main(none)
+{
+        function foo = foo1;
+        foo(none);                      // prints "a"
+
+        foo = foo2;
+        foo(none);                      // prints "b"
+
+        foo = fooCond1(0s);
+        foo(none);                      // prints "a"
+
+        function fooWithType = fooTyped;
+        print(fooWithType(none));       // prints "c" and "0"
+
+        foo = fooTyped;                 // compiler error
+        foo = fooCond2(0s);             // compiler error
+
+        return 0s;
+}
+
+// INFO: exact type under function is infered from the first assigned function type
+// INFO: compiler checks every return type for if its consistent
+// INFO: function type is 1. return type, 2. number of args, 3. types of args
