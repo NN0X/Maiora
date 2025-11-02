@@ -8,11 +8,60 @@
 
 int splitByScope(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint64_t begin, uint64_t end)
 {
-        // TODO: find { and correlated } then write their positions into indexes
+        if (tokens == NULL)
+        {
+                fprintf(stderr, "splitByScope: tokens are NULL.\n");
+                return 1;
+        }
+        if (indexes == NULL)
+        {
+                fprintf(stderr, "splitByScope: indexes are NULL.\n");
+                return 1;
+        }
+        if (numIndexes == NULL)
+        {
+                fprintf(stderr, "splitByScope: numIndexes is NULL.\n");
+                return 1;
+        }
+
+        uint64_t numOpenScopes = 0;
+        uint64_t numCloseScopes = 0;
+
+        for (uint64_t i = begin; i < end; i++)
+        {
+                switch (tokens[i].token)
+                {
+                        case TOK_OP_LCURLY:
+                                if (numOpenScopes == numCloseScopes)
+                                {
+                                        indexes[*numIndexes] = i;
+                                        (*numIndexes)++;
+                                }
+                                numOpenScopes++;
+                                break;
+                        case TOK_OP_RCURLY:
+                                numCloseScopes++;
+                                if (numOpenScopes != 0 && numOpenScopes == numCloseScopes)
+                                {
+                                        indexes[*numIndexes] = i;
+                                        (*numIndexes)++;
+                                }
+                                break;
+                        default:
+                                break;
+                }
+        }
+
+        if (numOpenScopes != 0 && numOpenScopes != numCloseScopes)
+        {
+                fprintf(stderr, "Number of { doesn't match number of }.\n");
+                return 1;
+        }
+
         return 0;
 }
 
-int splitByColon(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes)
+int splitBySColon(LTok_t* tokens, uint64_t* newIndexes, uint64_t* numNewIndexes, uint64_t* indexes, uint64_t numIndexes)
 {
         return 0;
 }
@@ -27,19 +76,33 @@ int generateAST(LData_t lexerData, ANode_t* root)
         uint64_t begin = 0;
         uint64_t end = lexerData.metadata.numTokens;
 
-        uint64_t* indexes = (uint64_t*)malloc(end * sizeof(uint64_t));
-        if (indexes == NULL)
+        uint64_t* indexesScope = (uint64_t*)malloc(end * sizeof(uint64_t));
+        if (indexesScope == NULL)
         {
-                fprintf(stderr, "malloc failed for indexes.\n");
+                fprintf(stderr, "malloc failed for indexesScope.\n");
+                return 1;
+        }
+
+        uint64_t indexesSColon = (uint64_t*)malloc(end * sizeof(uint64_t));
+        if (indexesSColon == NULL)
+        {
+                fprintf(stderr, "malloc failed for indexesSColon.\n");
                 return 1;
         }
 
         while (begin != end)
         {
-                uint64_t numIndexes = 0;
-                if (splitByScope(lexerData.tokens, indexes, &numIndexes, begin, end) != 0)
+                uint64_t numIndexesScope = 0;
+                if (splitByScope(lexerData.tokens, indexesScope, &numIndexesScope, begin, end) != 0)
                 {
                         fprintf(stderr, "splitByScope failed.\n");
+                        return 1;
+                }
+
+                uint64_t numIndexesSColon = 0;
+                if (splitBySColon(lexerData.tokens, indexesSColon, &numIndexesSColon, indexesScope, numIndexesScope) != 0)
+                {
+                        fprintf(stderr, "splitBySColon failed.\n");
                         return 1;
                 }
         }
