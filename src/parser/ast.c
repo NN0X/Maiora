@@ -10,12 +10,12 @@ int splitByScope(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint64
 {
         if (tokens == NULL)
         {
-                fprintf(stderr, "splitByScope: tokens are NULL.\n");
+                fprintf(stderr, "splitByScope: tokens is NULL.\n");
                 return 1;
         }
         if (indexes == NULL)
         {
-                fprintf(stderr, "splitByScope: indexes are NULL.\n");
+                fprintf(stderr, "splitByScope: indexes is NULL.\n");
                 return 1;
         }
         if (numIndexes == NULL)
@@ -54,15 +54,66 @@ int splitByScope(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint64
 
         if (numOpenScopes != 0 && numOpenScopes != numCloseScopes)
         {
-                fprintf(stderr, "Number of { doesn't match number of }.\n");
+                fprintf(stderr, "Number of '{' doesn't match number of '}'.\n");
                 return 1;
         }
 
         return 0;
 }
 
-int splitBySColon(LTok_t* tokens, uint64_t* newIndexes, uint64_t* numNewIndexes, uint64_t* indexes, uint64_t numIndexes)
+int splitBySColon(LTok_t* tokens, uint64_t* newIndexes, uint64_t* numNewIndexes, uint64_t* indexes, uint64_t numIndexes,
+                  uint64_t begin, uint64_t end)
 {
+        if (tokens == NULL)
+        {
+                fprintf(stderr, "splitByScope: tokens is NULL.\n");
+                return 1;
+        }
+        if (indexes == NULL)
+        {
+                fprintf(stderr, "splitByScope: indexes is NULL.\n");
+                return 1;
+        }
+        if (newIndexes == NULL)
+        {
+                fprintf(stderr, "splitByScope: newIndexes is NULL.\n");
+                return 1;
+        }
+        if (numNewIndexes == NULL)
+        {
+                fprintf(stderr, "splitByScope: numNewIndexes is NULL.\n");
+                return 1;
+        }
+
+        uint64_t currentScope = 0;
+        for (uint64_t i = begin; i < end; i++)
+        {
+                if (currentScope != 0 && i >= indexes[2*currentScope - 2] && i < indexes[2*currentScope - 1])
+                {
+                        continue;
+                }
+
+                switch(tokens[i].token)
+                {
+                        case TOK_OP_LCURLY:
+                                newIndexes[*numNewIndexes] = i;
+                                (*numNewIndexes)++
+                                break;
+                        case TOK_OP_RCURLY:
+                                newIndexes[*numNewIndexes] = i;
+                                (*numNewIndexes)++;
+                                currentScope++;
+                                break;
+                        case TOK_OP_SEMICOLON:
+                                newIndexes[*numNewIndexes] = i;
+                                (*numNewIndexes)++;
+                                break;
+                        default:
+                                break;
+                }
+
+        }
+
         return 0;
 }
 
@@ -100,7 +151,7 @@ int generateAST(LData_t lexerData, ANode_t* root)
                 }
 
                 uint64_t numIndexesSColon = 0;
-                if (splitBySColon(lexerData.tokens, indexesSColon, &numIndexesSColon, indexesScope, numIndexesScope) != 0)
+                if (splitBySColon(lexerData.tokens, indexesSColon, &numIndexesSColon, indexesScope, numIndexesScope, begin, end) != 0)
                 {
                         fprintf(stderr, "splitBySColon failed.\n");
                         return 1;
