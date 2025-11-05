@@ -66,22 +66,22 @@ int splitBySColon(LTok_t* tokens, uint64_t* newIndexes, uint64_t* numNewIndexes,
 {
         if (tokens == NULL)
         {
-                fprintf(stderr, "splitByScope: tokens is NULL.\n");
+                fprintf(stderr, "splitBySColon: tokens is NULL.\n");
                 return 1;
         }
         if (indexes == NULL)
         {
-                fprintf(stderr, "splitByScope: indexes is NULL.\n");
+                fprintf(stderr, "splitBySColon: indexes is NULL.\n");
                 return 1;
         }
         if (newIndexes == NULL)
         {
-                fprintf(stderr, "splitByScope: newIndexes is NULL.\n");
+                fprintf(stderr, "splitBySColon: newIndexes is NULL.\n");
                 return 1;
         }
         if (numNewIndexes == NULL)
         {
-                fprintf(stderr, "splitByScope: numNewIndexes is NULL.\n");
+                fprintf(stderr, "splitBySColon: numNewIndexes is NULL.\n");
                 return 1;
         }
 
@@ -97,7 +97,7 @@ int splitBySColon(LTok_t* tokens, uint64_t* newIndexes, uint64_t* numNewIndexes,
                 {
                         case TOK_OP_LCURLY:
                                 newIndexes[*numNewIndexes] = i;
-                                (*numNewIndexes)++
+                                (*numNewIndexes)++;
                                 break;
                         case TOK_OP_RCURLY:
                                 newIndexes[*numNewIndexes] = i;
@@ -122,6 +122,47 @@ int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
         return 0;
 }
 
+
+// TODO: add a way to bind unprocessed indexes to already processed nodes
+// ex. in if(a > b){print(a)}, print(a) is bound to if(a > b)
+int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_t* parent)
+{
+        if (tokens == NULL)
+        {
+                fprintf(stderr, "generateNodes: tokens is NULL.\n");
+                return 1;
+        }
+        if (indexes == NULL)
+        {
+                fprintf(stderr, "generateNodes: indexes is NULL.\n");
+                return 1;
+        }
+        if (parent == NULL)
+        {
+                fprintf(stderr, "generateNodes: parent is NULL.\n");
+                return 1;
+        }
+
+        for (uint64_t i = 0; i < numIndexes; i+=2)
+        {
+                ANode_t* node = (ANode_t*)malloc(sizeof(ANode_t));
+                if (node == NULL)
+                {
+                        fprintf(stderr, "malloc failed for node.\n");
+                        return 1;
+                }
+
+                node->parent = parent;
+                if (generateNode(tokens, indexes[i], indexes[i + 1], node) != 0)
+                {
+                        fprintf(stderr, "generateNode failed.\n");
+                        return 1;
+                }
+        }
+
+        return 0;
+}
+
 int generateAST(LData_t lexerData, ANode_t* root)
 {
         uint64_t begin = 0;
@@ -134,7 +175,7 @@ int generateAST(LData_t lexerData, ANode_t* root)
                 return 1;
         }
 
-        uint64_t indexesSColon = (uint64_t*)malloc(end * sizeof(uint64_t));
+        uint64_t* indexesSColon = (uint64_t*)malloc(end * sizeof(uint64_t));
         if (indexesSColon == NULL)
         {
                 fprintf(stderr, "malloc failed for indexesSColon.\n");
@@ -154,6 +195,12 @@ int generateAST(LData_t lexerData, ANode_t* root)
                 if (splitBySColon(lexerData.tokens, indexesSColon, &numIndexesSColon, indexesScope, numIndexesScope, begin, end) != 0)
                 {
                         fprintf(stderr, "splitBySColon failed.\n");
+                        return 1;
+                }
+
+                if (generateNodes(lexerData.tokens, indexesSColon, numIndexesSColon, root) != 0)
+                {
+                        fprintf(stderr, "generateNodes failed.\n");
                         return 1;
                 }
         }
