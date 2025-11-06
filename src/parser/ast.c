@@ -117,11 +117,25 @@ int splitBySColon(LTok_t* tokens, uint64_t* newIndexes, uint64_t* numNewIndexes,
         return 0;
 }
 
-int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
+typedef struct PassesBoundaries
+{
+        uint64_t size;
+        uint64_t offset;
+
+        uint64_t* begins;
+        uint64_t* ends;
+        ANode_t** parentNodes;
+} PBound_t;
+
+int findBoundaries(PBound_t* boundaries)
 {
         return 0;
 }
 
+int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
+{
+        return 0;
+}
 
 // TODO: add a way to bind unprocessed indexes to already processed nodes
 // ex. in if(a > b){print(a)}, print(a) is bound to if(a > b)
@@ -143,7 +157,7 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
                 return 1;
         }
 
-        for (uint64_t i = 0; i < numIndexes; i+=2)
+        for (uint64_t i = 0; i < numIndexes - 1; i++)
         {
                 ANode_t* node = (ANode_t*)malloc(sizeof(ANode_t));
                 if (node == NULL)
@@ -165,44 +179,80 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
 
 int generateAST(LData_t lexerData, ANode_t* root)
 {
-        uint64_t begin = 0;
-        uint64_t end = lexerData.metadata.numTokens;
+        uint64_t maxSize = lexerData.metadata.numTokens;
 
-        uint64_t* indexesScope = (uint64_t*)malloc(end * sizeof(uint64_t));
+        uint64_t* indexesScope = (uint64_t*)malloc(maxSize * sizeof(uint64_t));
         if (indexesScope == NULL)
         {
                 fprintf(stderr, "malloc failed for indexesScope.\n");
                 return 1;
         }
 
-        uint64_t* indexesSColon = (uint64_t*)malloc(end * sizeof(uint64_t));
+        uint64_t* indexesSColon = (uint64_t*)malloc(maxSize * sizeof(uint64_t));
         if (indexesSColon == NULL)
         {
                 fprintf(stderr, "malloc failed for indexesSColon.\n");
                 return 1;
         }
 
-        while (begin != end)
+        PBound_t boundaries;
+        boundaries.size = 1;
+        boundaries.offset = 0;
+        boundaries.begins = (uint64_t*)malloc(maxSize * sizeof(uint64_t));
+        if (boundaries.begins == NULL)
         {
+                return 1;
+        }
+        boundaries.ends = (uint64_t*)malloc(maxSize * sizeof(uint64_t));
+        if (boundaries.ends == NULL)
+        {
+                return 1;
+        }
+        boundaries.parentNodes = (ANode_t**)malloc(maxSize * sizeof(ANode_t*));
+        if (boundaries.parentNodes == NULL)
+        {
+                return 1;
+        }
+        boundaries.begins[0] = 0;
+        boundaries.ends[0] = lexerData.metadata.numTokens;
+        boundaries.parentNodes[0] = root;
+
+        while (boundaries.size != 0)
+        {
+                uint64_t begin = boundaries.begins[boundaries.offset];
+                uint64_t end = boundaries.ends[boundaries.offset];
+                ANode_t* parent = boundaries.parentNodes[boundaries.offset];
+
                 uint64_t numIndexesScope = 0;
-                if (splitByScope(lexerData.tokens, indexesScope, &numIndexesScope, begin, end) != 0)
+                if (splitByScope(lexerData.tokens, indexesScope, &numIndexesScope,
+                                 begin, end) != 0)
                 {
                         fprintf(stderr, "splitByScope failed.\n");
                         return 1;
                 }
 
                 uint64_t numIndexesSColon = 0;
-                if (splitBySColon(lexerData.tokens, indexesSColon, &numIndexesSColon, indexesScope, numIndexesScope, begin, end) != 0)
+                if (splitBySColon(lexerData.tokens, indexesSColon, &numIndexesSColon,
+                                  indexesScope, numIndexesScope, begin, end) != 0)
                 {
                         fprintf(stderr, "splitBySColon failed.\n");
                         return 1;
                 }
 
-                if (generateNodes(lexerData.tokens, indexesSColon, numIndexesSColon, root) != 0)
+                // shouldn't it be moved inside of generateNodes?
+                if (findBoundaries(&boundaries) != 0)
+                {
+                        return 1;
+                }
+
+                if (generateNodes(lexerData.tokens, indexesSColon, numIndexesSColon, parent) != 0)
                 {
                         fprintf(stderr, "generateNodes failed.\n");
                         return 1;
                 }
+
+                boundaries.size--;
+                boundaries.offset++;
         }
 
         return 0;
