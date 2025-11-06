@@ -127,19 +127,22 @@ typedef struct PassesBoundaries
         ANode_t** parentNodes;
 } PBound_t;
 
-int findBoundaries(PBound_t* boundaries)
-{
-        return 0;
-}
-
 int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
 {
         return 0;
 }
 
-// TODO: add a way to bind unprocessed indexes to already processed nodes
-// ex. in if(a > b){print(a)}, print(a) is bound to if(a > b)
-int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_t* parent)
+int linkNodeToParent(ANode_t* node)
+{
+        if (node == NULL)
+        {
+                return 1;
+        }
+
+        return 0;
+}
+
+int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_t* parent, PBound_t* boundaries)
 {
         if (tokens == NULL)
         {
@@ -154,6 +157,11 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
         if (parent == NULL)
         {
                 fprintf(stderr, "generateNodes: parent is NULL.\n");
+                return 1;
+        }
+        if (boundaries == NULL)
+        {
+                fprintf(stderr, "generateNodes: boundaries is NULL.\n");
                 return 1;
         }
 
@@ -172,6 +180,24 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
                         fprintf(stderr, "generateNode failed.\n");
                         return 1;
                 }
+
+                if (i < numIndexes - 2 && tokens[i + 1].token == TOK_OP_LCURLY)
+                {
+                        uint64_t boundaryIndex = boundaries->size + boundaries->offset;
+                        boundaries->begins[boundaryIndex] = i + 1;
+                        boundaries->ends[boundaryIndex] = i + 2;
+                        if (node->type == AST_STATEMENT)
+                        {
+                                boundaries->parentNodes[boundaryIndex] = node;
+                        }
+                        else
+                        {
+                                boundaries->parentNodes[boundaryIndex] = node->parent;
+                        }
+                        boundaries->size++;
+                }
+
+                linkNodeToParent(node);
         }
 
         return 0;
@@ -239,13 +265,7 @@ int generateAST(LData_t lexerData, ANode_t* root)
                         return 1;
                 }
 
-                // shouldn't it be moved inside of generateNodes?
-                if (findBoundaries(&boundaries) != 0)
-                {
-                        return 1;
-                }
-
-                if (generateNodes(lexerData.tokens, indexesSColon, numIndexesSColon, parent) != 0)
+                if (generateNodes(lexerData.tokens, indexesSColon, numIndexesSColon, parent, &boundaries) != 0)
                 {
                         fprintf(stderr, "generateNodes failed.\n");
                         return 1;
