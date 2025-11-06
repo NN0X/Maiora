@@ -65,7 +65,7 @@ void sortTokensByPosAndLine(LTok_t* tokens, uint64_t num)
         qsort(tokens, num, sizeof(LTok_t), posAndLineCompare);
 }
 
-int getTokenMatch(char *str)
+int getTokenMatch(char* str)
 {
         for (uint64_t i = 0; i < TOK_META_STR_BEGIN; i++)
         {
