@@ -132,11 +132,115 @@ int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
         return 0;
 }
 
+int linkNodeToRoot(ANode_t* node, ANode_t* parent)
+{
+        if (node == NULL)
+        {
+                fprintf(stderr, "linkNodeToRoot: node is NULL.\n");
+                return 1;
+        }
+        if (parent == NULL)
+        {
+                fprintf(stderr, "linkNodeToRoot: parent is NULL.\n");
+                return 1;
+        }
+
+        ARoot_t* root = (ARoot_t*)(parent->astData);
+        if (root == NULL)
+        {
+                fprintf(stderr, "linkNodeToRoot: root is NULL.\n");
+                return 1;
+        }
+
+        root->body[root->bodyNum] = node;
+        root->bodyNum++;
+
+        return 0;
+}
+
+int linkNodeToFuncDeclare(ANode_t* node, ANode_t* parent)
+{
+        if (node == NULL)
+        {
+                fprintf(stderr, "linkNodeToFuncDeclare: node is NULL.\n");
+                return 1;
+        }
+        if (parent == NULL)
+        {
+                fprintf(stderr, "linkNodeToFuncDeclare: parent is NULL.\n");
+                return 1;
+        }
+
+        AFDec_t* funcDecl = (AFDec_t*)(parent->astData);
+        if (funcDecl == NULL)
+        {
+                fprintf(stderr, "linkNodeToFuncDeclare: funcDecl is NULL.\n");
+                return 1;
+        }
+
+        funcDecl->scope = node; // FIX: temporary
+
+        return 0;
+}
+
+int linkNodeToStatement(ANode_t* node, ANode_t* parent)
+{
+        if (node == NULL)
+        {
+                fprintf(stderr, "linkNodeToStatement: node is NULL.\n");
+                return 1;
+        }
+        if (parent == NULL)
+        {
+                fprintf(stderr, "linkNodeToStatement: parent is NULL.\n");
+                return 1;
+        }
+
+        return 0;
+}
+
+// TODO: rewrite so appropriate nodes have intermediate scope node when linked to parents
 int linkNodeToParent(ANode_t* node)
 {
         if (node == NULL)
         {
+                fprintf(stderr, "linkNodeToParent: node is NULL.\n");
                 return 1;
+        }
+
+        ANode_t* parent = node->parent;
+        switch(parent->type)
+        {
+                case AST_ROOT:
+                        if (linkNodeToRoot(node, parent) != 0)
+                        {
+                                fprintf(stderr, "linkNodeToRoot failed.\n");
+                                return 1;
+                        }
+                        break;
+                case AST_FUNC_DECLARE:
+                        if (linkNodeToFuncDeclare(node, parent) != 0)
+                        {
+                                fprintf(stderr, "linkNodeToFuncDeclare failed.\n");
+                                return 1;
+                        }
+                        break;
+                case AST_STATEMENT:
+                        if (linkNodeToStatement(node, parent) != 0)
+                        {
+                                fprintf(stderr, "linkNodeToStatement failed.\n");
+                                return 1;
+                        }
+                        break;
+                case AST_VAR_DECLARE:
+                        fprintf(stderr, "Variable declaration should not have scoped children nodes.\n");
+                        return 1;
+                case AST_EXPRESSION:
+                        fprintf(stderr, "Expression should not have scoped children nodes.\n");
+                        return 1;
+                default:
+                        fprintf(stderr, "Unknown AST Node type.\n");
+                        return 1;
         }
 
         return 0;
@@ -197,7 +301,11 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
                         boundaries->size++;
                 }
 
-                linkNodeToParent(node);
+                if (linkNodeToParent(node) != 0)
+                {
+                        fprintf(stderr, "linkNodeToParent failed.\n");
+                        return 1;
+                }
         }
 
         return 0;
@@ -227,16 +335,19 @@ int generateAST(LData_t lexerData, ANode_t* root)
         boundaries.begins = (uint64_t*)malloc(maxSize * sizeof(uint64_t));
         if (boundaries.begins == NULL)
         {
+                fprintf(stderr, "malloc failed for boundaries.begins.\n");
                 return 1;
         }
         boundaries.ends = (uint64_t*)malloc(maxSize * sizeof(uint64_t));
         if (boundaries.ends == NULL)
         {
+                fprintf(stderr, "malloc failed for boundaries.ends.\n");
                 return 1;
         }
         boundaries.parentNodes = (ANode_t**)malloc(maxSize * sizeof(ANode_t*));
         if (boundaries.parentNodes == NULL)
         {
+                fprintf(stderr, "malloc failed for boundaries.parentNodes.\n");
                 return 1;
         }
         boundaries.begins[0] = 0;

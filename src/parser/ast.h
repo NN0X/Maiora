@@ -32,7 +32,7 @@ typedef struct AstNode
 
 typedef struct AstRoot
 {
-        ANode_t* body;
+        ANode_t** body;
         uint64_t bodyNum;
 } ARoot_t;
 
@@ -75,7 +75,7 @@ typedef struct AstFunctionDeclare
 
         VTypes_t visibility;
         bool isEntry;
-        ANode_t* body;
+        ANode_t* scope;
         LTypes_t returnType;
 
         ANode_t* params;
