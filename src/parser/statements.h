@@ -5,7 +5,7 @@
 
 typedef struct AstScopeStatement
 {
-        ANode_t* body;
+        ANode_t** body;
         uint64_t bodyNum;
 } AScpStmt_t;
 
@@ -24,8 +24,8 @@ typedef struct AstIfStatement
         ANode_t* condition;
         ANode_t* scope;
 
-        ANode_t* els;
-        uint64_t numEls;
+        ANode_t** elses;
+        uint64_t numElses;
 } AIfStmt_t;
 
 typedef struct AstElseStatement

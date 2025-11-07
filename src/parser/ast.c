@@ -199,7 +199,6 @@ int linkNodeToStatement(ANode_t* node, ANode_t* parent)
         return 0;
 }
 
-// TODO: rewrite so appropriate nodes have intermediate scope node when linked to parents
 int linkNodeToParent(ANode_t* node)
 {
         if (node == NULL)
@@ -246,6 +245,7 @@ int linkNodeToParent(ANode_t* node)
         return 0;
 }
 
+// TODO: rewrite so scopes are handled as nodes too
 int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_t* parent, PBound_t* boundaries)
 {
         if (tokens == NULL)
