@@ -1,4 +1,4 @@
-# Maiora Specification v0.1 \[OUTDATED\]
+# Maiora Specification v0.1alpha
 
 ## Types
 
@@ -43,42 +43,6 @@ entry sint64 main(none)
     foo(none);
     print(ascii"Hello, Maiora!");
     print(none);
-
-    return 0s;
-}
-```
-
-Above example demonstrates the use of `none` type in function signatures and calls.
-In case of passing `none` as an argument to a function that expects arguments, the function will execute all logic that does not depend on the arguments. This behavior can be prevented by using `strong` keyword or by overloading with `none` as argument. It's important to note that when statically compiled, `strong` is always implied.
-
-But then why do the functions have the ability to be called with `none` as an argument?
-This is because Maiora can be run in an interpreter where existence of a variable (for example in a save file) is not guaranteed. In such cases, the function can be called with `none` to execute the logic that does not depend on the arguments.
-
-In the interpreters that are compatible with Maiora Specification, the default behavior for such cases is to engage emergency handler that will add the function to backlog and execute it later when the required arguments are available.
-
-```maiora
-#import Types.string
-
-private none foo1(instance message)
-{
-    IO::print(message);
-}
-
-private none foo1(none)
-{
-    IO::print(ascii"Overloaded function with none argument.");
-}
-
-private strong none foo2(instance message)
-{
-    IO::print(message);
-}
-
-entry int64 main(none)
-{
-    foo1(ascii"Hello, Maiora!"); // Calls the first overload
-    foo1(none);             // Calls the second overload
-    foo2(none); // Error: strong function cannot be called with none
 
     return 0s;
 }
@@ -381,17 +345,26 @@ entry sint64 main(none)
 }
 ```
 
-#### Instance implicit fields
+### Instance keywords
 
-All instances in Maiora have implicit fields that can be accessed using the dot notation. These fields provide additional information about the instance and can be used for various purposes.
+- `get` - retrieves the return value of the instance function
+- `call` - calls the instance function with original arguments
 
-The implicit fields are:
+```maiora
+entry sint64 main(none)
+{
+    private instance addFunction = add(5s, 10s); // creates an instance of the add function
 
- - `return` - holds the return value of the function if it has one. (type depends on the function return type)
- - `error` - holds error information if the function encountered an error during execution. (uint64)
- - `call` - function that calling the instance function directly. (function <instance return type> <instance args types>)
- - `address` - holds the memory address of the instance. (address)
- - `size` - holds the size of the instance in bytes. (uint64)
+    private sint64 result = get addFunction; // retrieves the return value of the add function instance
+
+    IO::print(ascii"Result of addition: {result}"); // Output: Result of addition: 15
+
+    call addFunction; // calls the add function instance again
+
+    return 0s;
+}
+
+```
 
 ## Key concepts
 
@@ -562,53 +535,4 @@ entry sint64 main(none)
 
 ## Error handling
 
-Maiora does not have any `try-catch` or similar constructs for error handling. Instead the canonical way to get error information is through instance implicit fields.
-Example of error handling using implicit fields:
-```maiora
-#import IO
-
-private sint64 foo(sint64 a)
-{
-        return 1s / a; // This will cause a division by zero error
-}
-
-entry sint32 main(none)
-{
-        instance foo1 = foo(0);
-        if (foo1.error)
-        {
-                IO::print(ascii"Error occurred: {foo1.error}");
-        }
-
-        instance foo2 = foo(2s);
-        IO::print(ascii"Foo executed successfully with result: {foo1.return}");
-
-        return 0s;
-}
-```
-
-foo1.error type is uint64. To get the meaning of the error code use Error module.
-
-```maiora
-#import IO
-#import Error
-
-private sint64 foo(sint64 a)
-{
-        return 1s / a; // This will cause a division by zero error
-}
-
-entry sint32 main(none)
-{
-        instance foo1 = foo(0);
-        if (foo1.error)
-        {
-                IO::print(ascii"Error occurred: {Error::errorMessage(foo1.error)}");
-        }
-
-        instance foo2 = foo(2s);
-        IO::print(ascii"Foo executed successfully with result: {foo2.return}");
-
-        return 0s;
-}
-```
+Maiora does not have any language-level error handling mechanisms like exceptions or try-catch blocks. They may be added in future versions of the language.
