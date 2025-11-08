@@ -1,6 +1,9 @@
-# Maiora Specification v0.1alpha
+# Maiora Specification v0.1.1alpha
 
 ## Types
+
+### Variable initialization
+All variables must be initialized at the time of declaration. Uninitialized variables are not allowed.
 
 ### Type conversion
 
@@ -150,7 +153,7 @@ Same as ascii but allows for UTF-8 characters.
 ### entry
 
 The entry keyword is used to define the main entry point of the program. It specifies the function that will be executed when the program starts. The entry function can return any type that is convertible to sint64, which is typically used to indicate the exit status of the program.
-There can be only one entry function per program.
+There can be only one entry function per module.
 Entry function can take any arguments.
 
 
@@ -170,6 +173,8 @@ entry sint64 plentifulMain(ascii name, uint16 age, bool isStudent)
     return 0s;
 }
 ```
+
+In case of importing modules, the entry functions are invoked at the start of the program in the order of imports.
 
 ### private
 
@@ -270,7 +275,62 @@ entry sint32 main(none)
 }
 ```
 
+### address and reference
+The address keyword is used to indicate variable storing a memory address of a heap-allocated variable.
+The reference keyword is used to indicate variable storing a reference to an existing address or variable.
+
+Both follow these rules:
+- address is mutable, reference is immutable
+- address cannot be reassigned, reference can be reassigned
+- reference is created from an existing address or variable
+- reference has inherently the same scope as the variable it references
+- both address and reference cannot be returned from functions
+- address is automatically freed when going out of scope
+
+Example of using address and reference keywords:
+```maiora
+#import IO.print
+
+public none foo1(reference sint64 numbers)
+{
+        print("number at 0: ", numbers[0]);
+}
+
+public none foo1(address sint64 numbers)
+{
+        print("number at 0: ", numbers[0]);
+        numbers[1] = 101s;
+}
+
+entry sint32 main(none)
+{
+        address sint64 numbers = heap 10*[0s];
+        numbers[0] = 42s;
+
+        reference sint64 numRef = ref numbers;
+        foo1(numRef);
+
+        foo1(ref numbers);
+
+        foo1(numbers);
+
+        return 0s;
+}
+```
+
 ### function
+
+The function keyword is used to define a function type. This allows passing functions as arguments to other functions, returning functions from functions, and storing functions in variables.
+
+Example of using function keyword:
+```maiora
+private none executeFunction(function none f)
+{
+        IO::print(ascii"Executing function...");
+        f(none);
+        IO::print(ascii"Function executed.");
+}
+```
 
 ### instance
 
@@ -367,6 +427,8 @@ entry sint64 main(none)
 ```
 
 ## Key concepts
+
+### Safe by default
 
 ### Functions as data objects
 
@@ -535,4 +597,4 @@ entry sint64 main(none)
 
 ## Error handling
 
-Maiora does not have any language-level error handling mechanisms like exceptions or try-catch blocks. They may be added in future versions of the language.
+Maiora does not have any language-level error handling mechanisms like exceptions or try-catch blocks. Instead, error handling is implemented using instances in Errors module.
