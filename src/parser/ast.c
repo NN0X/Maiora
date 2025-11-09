@@ -163,8 +163,6 @@ int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
         return 0;
 }
 
-<<<<<<< Updated upstream
-=======
 int linkNodeToRoot(ANode_t* node, ANode_t* parent)
 {
         if (node == NULL)
@@ -228,7 +226,6 @@ int linkNodeToFuncDeclare(ANode_t* node, ANode_t* parent)
         return 0;
 }
 
->>>>>>> Stashed changes
 int linkNodeToParent(ANode_t* node)
 {
         if (node == NULL)
@@ -236,8 +233,6 @@ int linkNodeToParent(ANode_t* node)
                 return 1;
         }
 
-<<<<<<< Updated upstream
-=======
         ANode_t* parent = node->parent;
         if (parent == NULL)
         {
@@ -278,7 +273,6 @@ int linkNodeToParent(ANode_t* node)
                         return 1;
         }
 
->>>>>>> Stashed changes
         return 0;
 }
 
@@ -359,9 +353,6 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
                         boundaries->size++;
                 }
 
-<<<<<<< Updated upstream
-                linkNodeToParent(node);
-=======
                 if (node->parent == NULL)
                 {
                         fprintf(stderr, "node->parent is NULL.\n");
@@ -373,7 +364,6 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
                         fprintf(stderr, "linkNodeToParent failed.\n");
                         return 1;
                 }
->>>>>>> Stashed changes
         }
 
         return 0;
