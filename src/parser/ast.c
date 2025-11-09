@@ -285,11 +285,11 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
                         return 1;
                 }
 
-                if (i < numIndexes - 2 && tokens[i + 1].token == TOK_OP_LCURLY)
+                if (i < numIndexes - 2 && tokens[indexes[i + 1]].token == TOK_OP_LCURLY)
                 {
                         uint64_t boundaryIndex = boundaries->size + boundaries->offset;
-                        boundaries->begins[boundaryIndex] = i + 1;
-                        boundaries->ends[boundaryIndex] = i + 2;
+                        boundaries->begins[boundaryIndex] = indexes[i + 1];
+                        boundaries->ends[boundaryIndex] = indexes[i + 2];
                         if (node->type == AST_STATEMENT)
                         {
                                 boundaries->parentNodes[boundaryIndex] = node;
