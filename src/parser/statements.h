@@ -5,13 +5,13 @@
 
 typedef struct AstScopeStatement
 {
-        ANode_t* body;
+        ANode_t** body;
         uint64_t bodyNum;
 } AScpStmt_t;
 
 typedef struct AstUnsafeStatement
 {
-        ANode_t* body;
+        ANode_t* scope;
 } AUsfStmt_t;
 
 typedef struct AstReturnStatement
@@ -22,21 +22,21 @@ typedef struct AstReturnStatement
 typedef struct AstIfStatement
 {
         ANode_t* condition;
-        ANode_t* body;
+        ANode_t* scope;
 
-        ANode_t* els;
-        uint64_t numEls;
+        ANode_t** elses;
+        uint64_t numElses;
 } AIfStmt_t;
 
 typedef struct AstElseStatement
 {
-        ANode_t* body;
+        ANode_t* scope;
 } AElStmt_t;
 
 typedef struct AstElifStatement
 {
         ANode_t* condition;
-        ANode_t* body;
+        ANode_t* scope;
 } AEifStmt_t;
 
 typedef struct AstForStatement
@@ -44,20 +44,20 @@ typedef struct AstForStatement
         ANode_t* initializer;
         ANode_t* condition;
         ANode_t* update;
-        ANode_t* body;
+        ANode_t* scope;
 } AForStmt_t;
 
 typedef struct AstForRangeStatement
 {
         ANode_t* iterator;
         ANode_t* target;
-        ANode_t* body;
+        ANode_t* scope;
 } AFRanStmt_t;
 
 typedef struct AstWhileStatement
 {
         ANode_t* condition;
-        ANode_t* body;
+        ANode_t* scope;
 } AWhStmt_t;
 
 typedef struct AstAssignStatement
@@ -70,18 +70,20 @@ typedef struct AstSwitchStatement
 {
         ANode_t* switcher;
 
-        ANode_t* cases;
+        ANode_t** cases;
         uint64_t casesNum;
 } ASwiStmt_t;
 
 typedef struct AstCaseStatement
 {
-        ANode_t* body;
+        ANode_t** body;
+        uint64_t bodyNum;
 } ACasStmt_t;
 
 typedef struct AstSwitchElseStatement
 {
-        ANode_t* body;
+        ANode_t** body;
+        uint64_t bodyNum;
 } ASwElStmt_t;
 
 int generateScopeNode(ANode_t* node);
