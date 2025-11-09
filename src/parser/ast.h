@@ -102,12 +102,16 @@ typedef struct AstVariableDeclare
 
 typedef enum StatementTypes
 {
+        // unscoped
         STMT_SCOPE,
+        STMT_RETURN,
+        STMT_ASSIGN,
 
+        STMT_META_SCOPED,
+
+        // scoped
         STMT_UNSAFE,
         STMT_ASM,
-
-        STMT_RETURN,
 
         STMT_IF,
         STMT_ELSE,
@@ -117,11 +121,8 @@ typedef enum StatementTypes
         STMT_FORAN,
         STMT_WHILE,
 
-        STMT_ASSIGN,
-
         STMT_SWITCH,
         STMT_CASE,
-        STMT_SWELSE,
 } STypes_t;
 
 typedef struct AstStatement
@@ -159,6 +160,16 @@ typedef struct AstExpression
         ETypes_t type;
         void* exprData;
 } AExpr_t;
+
+typedef struct PassesBoundaries
+{
+        uint64_t size;
+        uint64_t offset;
+
+        uint64_t* begins;
+        uint64_t* ends;
+        ANode_t** parentNodes;
+} PBound_t;
 
 int generateAST(LData_t lexerData, ANode_t* root);
 

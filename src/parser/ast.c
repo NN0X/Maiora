@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "ast.h"
+#include "statements.h"
 #include "../lexer/lexer.h"
 #include "../lexer/token.h"
 
@@ -117,21 +118,117 @@ int splitBySColon(LTok_t* tokens, uint64_t* newIndexes, uint64_t* numNewIndexes,
         return 0;
 }
 
-typedef struct PassesBoundaries
+int isScopedNode(ANode_t* node, bool* result)
 {
-        uint64_t size;
-        uint64_t offset;
+        if (node == NULL)
+        {
+                fprintf(stderr, "isScopedNode: node is NULL.\n");
+                return 1;
+        }
+        if (result == NULL)
+        {
+                fprintf(stderr, "isScopedNode: result is NULL.\n");
+                return 1;
+        }
 
-        uint64_t* begins;
-        uint64_t* ends;
-        ANode_t** parentNodes;
-} PBound_t;
+        switch (node->type)
+        {
+                case AST_FUNC_DECLARE:
+                        *result = true;
+                        return 0;
+                case AST_STATEMENT:
+                        if (isStatementScoped(node, result) != 0)
+                        {
+                                fprintf(stderr, "isStatementScoped failed.\n");
+                                return 1;
+                        }
+                        return 0;
+                case AST_ROOT:
+                case AST_VAR_DECLARE:
+                case AST_EXPRESSION:
+                        *result = false;
+                        return 0;
+                default:
+                        fprintf(stderr, "isScopedNode: Unknown AST Node type.\n");
+                        return 1;
+        }
 
-int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
-{
         return 0;
 }
 
+int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
+{
+        node->type = AST_INVALID; // TEMP
+
+        return 0;
+}
+
+<<<<<<< Updated upstream
+=======
+int linkNodeToRoot(ANode_t* node, ANode_t* parent)
+{
+        if (node == NULL)
+        {
+                fprintf(stderr, "linkNodeToRoot: node is NULL.\n");
+                return 1;
+        }
+        if (parent == NULL)
+        {
+                fprintf(stderr, "linkNodeToRoot: parent is NULL.\n");
+                return 1;
+        }
+
+        ARoot_t* root = (ARoot_t*)(parent->astData);
+        if (root == NULL)
+        {
+                fprintf(stderr, "linkNodeToRoot: root is NULL.\n");
+                return 1;
+        }
+
+        root->body[root->bodyNum] = node;
+        root->bodyNum++;
+
+        return 0;
+}
+
+int linkNodeToFuncDeclare(ANode_t* node, ANode_t* parent)
+{
+        if (node == NULL)
+        {
+                fprintf(stderr, "linkNodeToFuncDeclare: node is NULL.\n");
+                return 1;
+        }
+        if (parent == NULL)
+        {
+                fprintf(stderr, "linkNodeToFuncDeclare: parent is NULL.\n");
+                return 1;
+        }
+
+        AStmt_t* stmt = (AStmt_t*)(node->astData);
+        if (stmt == NULL)
+        {
+                fprintf(stderr, "linkNodeToFuncDeclare: stmt is NULL.\n");
+                return 1;
+        }
+        if (stmt->type != STMT_SCOPE)
+        {
+                fprintf(stderr, "linkNodeToFuncDeclare: stmt is not a SCOPE statement.\n");
+                return 1;
+        }
+
+        AFDec_t* funcDecl = (AFDec_t*)(parent->astData);
+        if (funcDecl == NULL)
+        {
+                fprintf(stderr, "linkNodeToFuncDeclare: funcDecl is NULL.\n");
+                return 1;
+        }
+
+        funcDecl->scope = node;
+
+        return 0;
+}
+
+>>>>>>> Stashed changes
 int linkNodeToParent(ANode_t* node)
 {
         if (node == NULL)
@@ -139,6 +236,49 @@ int linkNodeToParent(ANode_t* node)
                 return 1;
         }
 
+<<<<<<< Updated upstream
+=======
+        ANode_t* parent = node->parent;
+        if (parent == NULL)
+        {
+                fprintf(stderr, "linkNodeToParent: parent is NULL.\n");
+                return 1;
+        }
+        switch(parent->type)
+        {
+                case AST_ROOT:
+                        if (linkNodeToRoot(node, parent) != 0)
+                        {
+                                fprintf(stderr, "linkNodeToRoot failed.\n");
+                                return 1;
+                        }
+                        break;
+                case AST_FUNC_DECLARE:
+                        if (linkNodeToFuncDeclare(node, parent) != 0)
+                        {
+                                fprintf(stderr, "linkNodeToFuncDeclare failed.\n");
+                                return 1;
+                        }
+                        break;
+                case AST_STATEMENT:
+                        if (linkNodeToStatement(node, parent) != 0)
+                        {
+                                fprintf(stderr, "linkNodeToStatement failed.\n");
+                                return 1;
+                        }
+                        break;
+                case AST_VAR_DECLARE:
+                        fprintf(stderr, "Variable declaration should not have scoped children nodes.\n");
+                        return 1;
+                case AST_EXPRESSION:
+                        fprintf(stderr, "Expression should not have scoped children nodes.\n");
+                        return 1;
+                default:
+                        fprintf(stderr, "Unknown AST Node type.\n");
+                        return 1;
+        }
+
+>>>>>>> Stashed changes
         return 0;
 }
 
@@ -174,30 +314,66 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
                         return 1;
                 }
 
-                node->parent = parent;
                 if (generateNode(tokens, indexes[i], indexes[i + 1], node) != 0)
                 {
                         fprintf(stderr, "generateNode failed.\n");
                         return 1;
                 }
 
-                if (i < numIndexes - 2 && tokens[i + 1].token == TOK_OP_LCURLY)
+                if (i < numIndexes - 2 && tokens[indexes[i + 1]].token == TOK_OP_LCURLY)
                 {
                         uint64_t boundaryIndex = boundaries->size + boundaries->offset;
-                        boundaries->begins[boundaryIndex] = i + 1;
-                        boundaries->ends[boundaryIndex] = i + 2;
-                        if (node->type == AST_STATEMENT)
+                        boundaries->begins[boundaryIndex] = indexes[i + 1];
+                        boundaries->ends[boundaryIndex] = indexes[i + 2];
+                        ANode_t* scopeNode = (ANode_t*)malloc(sizeof(ANode_t));
+                        if (scopeNode == NULL)
                         {
-                                boundaries->parentNodes[boundaryIndex] = node;
+                                fprintf(stderr, "malloc failed for scopeNode.\n");
+                                return 1;
+                        }
+
+                        bool isScoped = false;
+                        if (isScopedNode(node, &isScoped) != 0)
+                        {
+                                fprintf(stderr, "isScopedNode failed.\n");
+                                return 1;
+                        }
+
+                        if (!isScoped)
+                        {
+                                node->parent = parent;
+                                boundaries->parentNodes[boundaryIndex] = parent->parent;
                         }
                         else
                         {
-                                boundaries->parentNodes[boundaryIndex] = node->parent;
+                                if (generateScopeNode(scopeNode) != 0)
+                                {
+                                        fprintf(stderr, "generateScopeNode failed.\n");
+                                        return 1;
+                                }
+                                node->parent = scopeNode;
+                                scopeNode->parent = parent;
+                                boundaries->parentNodes[boundaryIndex] = scopeNode;
                         }
+
                         boundaries->size++;
                 }
 
+<<<<<<< Updated upstream
                 linkNodeToParent(node);
+=======
+                if (node->parent == NULL)
+                {
+                        fprintf(stderr, "node->parent is NULL.\n");
+                        return 1;
+                }
+
+                if (linkNodeToParent(node) != 0)
+                {
+                        fprintf(stderr, "linkNodeToParent failed.\n");
+                        return 1;
+                }
+>>>>>>> Stashed changes
         }
 
         return 0;
