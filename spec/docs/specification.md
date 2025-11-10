@@ -1,4 +1,4 @@
-# Maiora Specification v0.1.2alpha
+# Maiora Specification v0.1.3alpha
 
 ## Types
 
@@ -280,10 +280,10 @@ The address keyword is used to indicate variable storing a memory address of a h
 The reference keyword is used to indicate variable storing a reference to an existing address or variable.
 
 Both follow these rules:
-- address is mutable, reference is immutable
-- address cannot be reassigned, reference can be reassigned
+- value under address is mutable, value under reference is immutable
 - reference is created from an existing address or variable
 - reference has inherently the same scope as the variable it references
+- both address and reference are immutable themselves (cannot be reassigned)
 - both address and reference cannot be returned from functions
 - address is automatically freed when going out of scope
 
