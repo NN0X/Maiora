@@ -1,4 +1,4 @@
-# Maiora Specification v0.1.1alpha
+# Maiora Specification v0.1.2alpha
 
 ## Types
 
@@ -425,6 +425,54 @@ entry sint64 main(none)
 }
 
 ```
+
+### async, join, spawn
+The `async` keyword is used to define a function that will be executed asynchronously and the variable that will hold the async instance. The `spawn` keyword is used to create a new asynchronous task, and the `join` keyword is used to wait for an asynchronous task to complete.
+
+Example of using async, spawn, and join keywords:
+```maiora
+private async sint64 asyncAdd(sint64 a, sint64 b)
+{
+    return a + b;
+}
+
+entry sint32 main(none)
+{
+    private async asyncTask = spawn asyncAdd(5s, 10s);
+    private sint64 result = join asyncTask;
+
+    return 0s;
+}
+```
+
+All writes to address variables in async functions are implicitly locked.
+To avoid implicit locking, declare async function with unsafe keyword.
+
+```maiora
+private async none increment(address sint64 counter)
+{
+    for (uint64 i = 0u; i < 1000u; i = i + 1u)
+    {
+        counter = counter + 1s;
+    }
+}
+
+entry sint32 main(none)
+{
+    address sint64 counter = heap 0s;
+
+    private async asyncTask1 = spawn increment(ref counter);
+    private async asyncTask2 = spawn increment(ref counter);
+
+    join asyncTask1;
+    join asyncTask2;
+
+    IO::print(ascii"Final counter value: {counter}"); // Output: Final counter value: 2000
+
+    return 0s;
+}
+```
+If async is not joined before going out of scope, the program will automatically join it.
 
 ## Key concepts
 
