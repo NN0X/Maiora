@@ -310,6 +310,8 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
                         return 1;
                 }
 
+                node->parent = parent;
+
                 if (i < numIndexes - 2 && tokens[indexes[i + 1]].token == TOK_OP_LCURLY)
                 {
                         uint64_t boundaryIndex = boundaries->size + boundaries->offset;
@@ -318,12 +320,6 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
 
                         ANode_t* scopeNode = (ANode_t*)malloc(sizeof(ANode_t));
                         if (scopeNode == NULL)
-                        {
-                                fprintf(stderr, "malloc failed for scopeNode.\n");
-                                return 1;
-                        }
-
-                        if (node->type == AST_STATEMENT)
                         {
                                 fprintf(stderr, "malloc failed for scopeNode.\n");
                                 return 1;
@@ -338,8 +334,7 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
 
                         if (!isScoped)
                         {
-                                node->parent = parent;
-                                boundaries->parentNodes[boundaryIndex] = parent->parent;
+                                boundaries->parentNodes[boundaryIndex] = parent;
                         }
                         else
                         {
