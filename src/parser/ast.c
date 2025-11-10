@@ -158,7 +158,52 @@ int isScopedNode(ANode_t* node, bool* result)
 
 int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
 {
-        node->type = AST_INVALID; // TEMP
+        if (tokens == NULL)
+        {
+                fprintf(stderr, "generateNode: tokens is NULL.\n");
+                return 1;
+        }
+        if (node == NULL)
+        {
+                fprintf(stderr, "generateNode: node is NULL.\n");
+                return 1;
+        }
+
+        bool containsVisiblitySpecifier = false;
+        bool containsType = false;
+        bool containsPars = false;
+        bool containsNone = false;
+        bool containsAssign = false;
+        bool containsStatementKeyword = false;
+
+        if (isFuncDecl)
+        {
+                if (generateFuncDeclNode() != 0)
+                {
+                        return 1;
+                }
+        }
+        else if (isVarDecl)
+        {
+                if (generateVarDeclNode() != 0)
+                {
+                        return 1;
+                }
+        }
+        else if (isStmt)
+        {
+                if (generateStatementNode() != 0)
+                {
+                        return 1;
+                }
+        }
+        else
+        {
+                if (generateExpressionNode() != 0)
+                {
+                        return 1;
+                }
+        }
 
         return 0;
 }
