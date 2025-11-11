@@ -143,6 +143,7 @@ int isScopedNode(ANode_t* node, bool* result)
                                 return 1;
                         }
                         return 0;
+                case AST_EMPTY:
                 case AST_ROOT:
                 case AST_VAR_DECLARE:
                 case AST_EXPRESSION:
@@ -152,6 +153,20 @@ int isScopedNode(ANode_t* node, bool* result)
                         fprintf(stderr, "isScopedNode: Unknown AST Node type.\n");
                         return 1;
         }
+
+        return 0;
+}
+
+int generateEmptyNode(ANode_t* node)
+{
+        if (node == NULL)
+        {
+                fprintf(stderr, "generateEmptyNode: node is NULL.\n");
+                return 1;
+        }
+
+        node->type = AST_EMPTY;
+        node->astData = NULL;
 
         return 0;
 }
@@ -169,40 +184,117 @@ int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
                 return 1;
         }
 
-        bool containsVisiblitySpecifier = false;
-        bool containsType = false;
+        if (end == begin + 1)
+        {
+                if (generateEmptyNode(node) != 0)
+                {
+                        fprintf(stderr, "generateEmptyNode failed.\n");
+                        return 1;
+                }
+                printf("is empty\n");
+                return 0;
+        }
+
+        bool containsEntry = false;
+        bool containsVisibilitySpecifier = false;
         bool containsPars = false;
-        bool containsNone = false;
         bool containsAssign = false;
+        bool containsType = false;
         bool containsStatementKeyword = false;
+        bool containsID = false;
+
+        for (uint64_t i = begin + 1; i < end; i++)
+        {
+                TTypes_t type = tokens[i].token;
+                if (type == TOK_KEYW_ENTRY)
+                {
+                        containsEntry = true;
+                        break;
+                }
+                else if (type == TOK_KEYW_PUBLIC || type == TOK_KEYW_PRIVATE)
+                {
+                        containsVisibilitySpecifier = true;
+                }
+                else if (type == TOK_OP_LPAR)
+                {
+                        containsPars = true;
+                }
+                else if (type == TOK_OP_ASSIGN)
+                {
+                        containsAssign = true;
+                }
+                else if (type > TOK_TYPE_NONE && type <= TOK_TYPE_UTF8)
+                {
+                        containsType = true;
+                }
+                else if (type >= TOK_KEYW_WHILE && type <= TOK_KEYW_ASM)
+                {
+                        containsStatementKeyword = true;
+                        break;
+                }
+                else if (type == TOK_ID)
+                {
+                        containsID = true;
+                }
+        }
+
+        bool isFuncDecl = false;
+        bool isVarDecl = false;
+        bool isStmt = false;
+
+        if (containsEntry)
+        {
+                isFuncDecl = true;
+        }
+        else if (containsStatementKeyword)
+        {
+                isStmt = true;
+        }
+        else if (containsType && containsAssign && containsID)
+        {
+                isVarDecl = true;
+        }
+        else if (containsType && containsVisibilitySpecifier && containsID && containsPars)
+        {
+                isFuncDecl = true;
+        }
+
 
         if (isFuncDecl)
         {
-                if (generateFuncDeclNode() != 0)
+                /*if (generateFuncDeclNode() != 0)
                 {
                         return 1;
-                }
+                }*/
+                node->type = AST_FUNC_DECLARE;
+                printf("is func decl\n");
         }
         else if (isVarDecl)
         {
-                if (generateVarDeclNode() != 0)
+                /*if (generateVarDeclNode() != 0)
                 {
                         return 1;
-                }
+                }*/
+                node->type = AST_VAR_DECLARE;
+                printf("is var decl\n");
         }
         else if (isStmt)
         {
-                if (generateStatementNode() != 0)
+                /*if (generateStatementNode() != 0)
                 {
                         return 1;
-                }
+                }*/
+                node->type = AST_STATEMENT;
+                printf("is stmt\n");
         }
         else
         {
-                if (generateExpressionNode() != 0)
+                /*if (generateExpressionNode() != 0)
                 {
                         return 1;
-                }
+                }*/
+                node->type = AST_EXPRESSION;
+                printf("is expr\n");
         }
 
         return 0;
@@ -363,13 +455,6 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
                         boundaries->begins[boundaryIndex] = indexes[i + 1];
                         boundaries->ends[boundaryIndex] = indexes[i + 2];
 
-                        ANode_t* scopeNode = (ANode_t*)malloc(sizeof(ANode_t));
-                        if (scopeNode == NULL)
-                        {
-                                fprintf(stderr, "malloc failed for scopeNode.\n");
-                                return 1;
-                        }
-
                         bool isScoped = false;
                         if (isScopedNode(node, &isScoped) != 0)
                         {
@@ -383,6 +468,13 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
                         }
                         else
                         {
+                                ANode_t* scopeNode = (ANode_t*)malloc(sizeof(ANode_t));
+                                if (scopeNode == NULL)
+                                {
+                                        fprintf(stderr, "malloc failed for scopeNode.\n");
+                                        return 1;
+                                }
+
                                 if (generateScopeNode(scopeNode) != 0)
                                 {
                                         fprintf(stderr, "generateScopeNode failed.\n");
@@ -415,6 +507,29 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
 int generateAST(LData_t lexerData, ANode_t* root)
 {
         uint64_t maxSize = lexerData.metadata.numTokens;
+
+        if (root->type != AST_ROOT)
+        {
+                fprintf(stderr, "generateAST: root node is not of type AST_ROOT.\n");
+                return 1;
+        }
+        if (root->astData == NULL)
+        {
+                ARoot_t* astRootData = (ARoot_t*)malloc(sizeof(ARoot_t));
+                if (astRootData == NULL)
+                {
+                        fprintf(stderr, "malloc failed for astRootData.\n");
+                        return 1;
+                }
+                astRootData->body = (ANode_t**)malloc(maxSize * sizeof(ANode_t*));
+                if (astRootData->body == NULL)
+                {
+                        fprintf(stderr, "malloc failed for astRootData->body.\n");
+                        return 1;
+                }
+                astRootData->bodyNum = 0;
+                root->astData = (void*)astRootData;
+        }
 
         uint64_t* indexesScope = (uint64_t*)malloc(maxSize * sizeof(uint64_t));
         if (indexesScope == NULL)

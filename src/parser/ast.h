@@ -9,11 +9,12 @@
 typedef enum AstNodeTypes
 {
         AST_INVALID = -1,
+        AST_EMPTY = 0,      // child node for scopes with no content
         AST_ROOT,           // the root of the AST
         AST_FUNC_DECLARE,   // function declaration
         AST_VAR_DECLARE,    // int8 x
-        AST_EXPRESSION,     // binary ops, literals
         AST_STATEMENT,      // if, while, return
+        AST_EXPRESSION,     // binary ops, literals
 } ANTypes_t;
 
 typedef struct AstNode ANode_t;
