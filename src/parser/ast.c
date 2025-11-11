@@ -7,6 +7,9 @@
 #include "../lexer/lexer.h"
 #include "../lexer/token.h"
 
+// TODO: add splitRoot so there is initial boundary for "global"
+
+// TODO: check if it correctly splits eg "{ a; { b; } c; }" into ["a;, { b; }, c;"]
 int splitByScope(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint64_t begin, uint64_t end)
 {
         if (tokens == NULL)
@@ -28,9 +31,21 @@ int splitByScope(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint64
         uint64_t numOpenScopes = 0;
         uint64_t numCloseScopes = 0;
 
+        bool isInsideFormattedString = false;
+
         for (uint64_t i = begin; i < end; i++)
         {
-                switch (tokens[i].token)
+                TTypes_t type = tokens[i].token;
+                if (type == TOK_OP_DQUOTE)
+                {
+                        isInsideFormattedString = !isInsideFormattedString;
+                }
+                if (isInsideFormattedString)
+                {
+                        continue;
+                }
+
+                switch (type)
                 {
                         case TOK_OP_LCURLY:
                                 if (numOpenScopes == numCloseScopes)
@@ -62,6 +77,7 @@ int splitByScope(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint64
         return 0;
 }
 
+// FIX: fix splitting so it only splits stuff in the current scope level
 int splitBySColon(LTok_t* tokens, uint64_t* newIndexes, uint64_t* numNewIndexes, uint64_t* indexes, uint64_t numIndexes,
                   uint64_t begin, uint64_t end)
 {
@@ -184,7 +200,7 @@ int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
                 return 1;
         }
 
-        if (end == begin + 1)
+        if (begin == end)
         {
                 if (generateEmptyNode(node) != 0)
                 {
@@ -203,7 +219,7 @@ int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
         bool containsStatementKeyword = false;
         bool containsID = false;
 
-        for (uint64_t i = begin + 1; i < end; i++)
+        for (uint64_t i = begin; i < end; i++)
         {
                 TTypes_t type = tokens[i].token;
                 if (type == TOK_KEYW_ENTRY)
