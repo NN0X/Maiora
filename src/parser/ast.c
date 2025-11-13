@@ -33,7 +33,7 @@ int splitByScope(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint64
 
         bool isInsideFormattedString = false;
 
-        for (uint64_t i = begin; i < end; i++)
+        for (uint64_t i = begin + 1; i < end; i++)
         {
                 TTypes_t type = tokens[i].token;
                 if (type == TOK_OP_DQUOTE)
@@ -106,7 +106,7 @@ int splitBySColon(LTok_t* tokens, uint64_t* newIndexes, uint64_t* numNewIndexes,
 
         uint64_t currentIndex = 0;
         uint64_t scopeDepth = 0;
-        for (uint64_t i = begin; i < end; i++)
+        for (uint64_t i = begin; i < end + 1; i++)
         {
                 TTypes_t token = tokens[i].token;
                 if (indexes[currentIndex] == i)
@@ -222,6 +222,7 @@ int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
         for (uint64_t i = begin; i < end; i++)
         {
                 TTypes_t type = tokens[i].token;
+                printf("Token: %d\n", type);
                 if (type == TOK_KEYW_ENTRY)
                 {
                         containsEntry = true;
@@ -243,7 +244,7 @@ int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
                 {
                         containsType = true;
                 }
-                else if (type >= TOK_KEYW_WHILE && type <= TOK_KEYW_ASM)
+                else if ((type >= TOK_KEYW_WHILE && type <= TOK_KEYW_ASM) || type == TOK_KEYW_RETURN)
                 {
                         containsStatementKeyword = true;
                         break;
@@ -262,19 +263,18 @@ int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
         {
                 isFuncDecl = true;
         }
-        else if (containsStatementKeyword)
+        if (containsStatementKeyword)
         {
                 isStmt = true;
         }
-        else if (containsType && containsAssign && containsID)
+        if (containsType && containsAssign && containsID)
         {
                 isVarDecl = true;
         }
-        else if (containsType && containsVisibilitySpecifier && containsID && containsPars)
+        if (containsType && containsVisibilitySpecifier && containsID && containsPars)
         {
                 isFuncDecl = true;
         }
-
         if (containsAssign && !isVarDecl)
         {
                 isStmt = true;
@@ -614,9 +614,10 @@ int generateAST(LData_t lexerData, ANode_t* root)
                 uint64_t begin = boundaries.begins[boundaries.offset];
                 uint64_t end = boundaries.ends[boundaries.offset];
                 ANode_t* parent = boundaries.parentNodes[boundaries.offset];
+                ANTypes_t parentType = parent->type;
 
-                fprintf(stderr, "Processing boundary %lu: begin=%lu, end=%lu, size=%lu\n", 
-                boundaries.offset, begin, end, boundaries.size);
+                fprintf(stderr, "Processing boundary %lu: begin=%lu, end=%lu, size=%lu, type=%d\n", 
+                boundaries.offset, begin, end, boundaries.size, parentType);
 
                 uint64_t numIndexesScope = 0;
                 if (splitByScope(lexerData.tokens, indexesScope, &numIndexesScope,
