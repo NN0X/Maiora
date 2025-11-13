@@ -7,9 +7,6 @@
 #include "../lexer/lexer.h"
 #include "../lexer/token.h"
 
-// TODO: add splitRoot so there is initial boundary for "global"
-
-// TODO: check if it correctly splits eg "{ a; { b; } c; }" into ["a;, { b; }, c;"]
 int splitByScope(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint64_t begin, uint64_t end)
 {
         if (tokens == NULL)
@@ -30,6 +27,9 @@ int splitByScope(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint64
 
         uint64_t numOpenScopes = 0;
         uint64_t numCloseScopes = 0;
+
+        indexes[*numIndexes] = begin;
+        (*numIndexes)++;
 
         bool isInsideFormattedString = false;
 
@@ -68,7 +68,10 @@ int splitByScope(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint64
                 }
         }
 
-        if (numOpenScopes != 0 && numOpenScopes != numCloseScopes)
+        indexes[*numIndexes] = end;
+        (*numIndexes)++;
+
+        if (numOpenScopes != numCloseScopes)
         {
                 fprintf(stderr, "Number of '{' doesn't match number of '}'.\n");
                 return 1;
@@ -77,9 +80,8 @@ int splitByScope(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint64
         return 0;
 }
 
-// FIX: fix splitting so it only splits stuff in the current scope level
-int splitBySColon(LTok_t* tokens, uint64_t* newIndexes, uint64_t* numNewIndexes, uint64_t* indexes, uint64_t numIndexes,
-                  uint64_t begin, uint64_t end)
+int splitBySColon(LTok_t* tokens, uint64_t* newIndexes, uint64_t* numNewIndexes,
+                  uint64_t* indexes, uint64_t numIndexes, uint64_t begin, uint64_t end)
 {
         if (tokens == NULL)
         {
@@ -102,31 +104,29 @@ int splitBySColon(LTok_t* tokens, uint64_t* newIndexes, uint64_t* numNewIndexes,
                 return 1;
         }
 
-        uint64_t currentScope = 0;
+        uint64_t currentIndex = 0;
+        uint64_t scopeDepth = 0;
         for (uint64_t i = begin; i < end; i++)
         {
-                if (currentScope != 0 && i >= indexes[2*currentScope - 2] && i < indexes[2*currentScope - 1])
+                TTypes_t token = tokens[i].token;
+                if (indexes[currentIndex] == i)
                 {
-                        continue;
+                        newIndexes[*numNewIndexes] = i;
+                        (*numNewIndexes)++;
+                        currentIndex++;
                 }
-
-                switch(tokens[i].token)
+                else if (token == TOK_OP_LCURLY)
                 {
-                        case TOK_OP_LCURLY:
-                                newIndexes[*numNewIndexes] = i;
-                                (*numNewIndexes)++;
-                                break;
-                        case TOK_OP_RCURLY:
-                                newIndexes[*numNewIndexes] = i;
-                                (*numNewIndexes)++;
-                                currentScope++;
-                                break;
-                        case TOK_OP_SEMICOLON:
-                                newIndexes[*numNewIndexes] = i;
-                                (*numNewIndexes)++;
-                                break;
-                        default:
-                                break;
+                        scopeDepth++;
+                }
+                else if (token == TOK_OP_RCURLY)
+                {
+                        scopeDepth--;
+                }
+                else if (token == TOK_OP_SEMICOLON && scopeDepth == 0)
+                {
+                        newIndexes[*numNewIndexes] = i;
+                        (*numNewIndexes)++;
                 }
 
         }
@@ -273,6 +273,11 @@ int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
         else if (containsType && containsVisibilitySpecifier && containsID && containsPars)
         {
                 isFuncDecl = true;
+        }
+
+        if (containsAssign && !isVarDecl)
+        {
+                isStmt = true;
         }
 
 
@@ -457,7 +462,13 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
                         return 1;
                 }
 
-                if (generateNode(tokens, indexes[i], indexes[i + 1], node) != 0)
+                uint64_t beginIndex = indexes[i];
+                if (beginIndex > 0)
+                {
+                        beginIndex++;
+                }
+
+                if (generateNode(tokens, beginIndex, indexes[i + 1], node) != 0)
                 {
                         fprintf(stderr, "generateNode failed.\n");
                         return 1;
@@ -467,9 +478,20 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
 
                 if (i < numIndexes - 2 && tokens[indexes[i + 1]].token == TOK_OP_LCURLY)
                 {
-                        uint64_t boundaryIndex = boundaries->size + boundaries->offset;
-                        boundaries->begins[boundaryIndex] = indexes[i + 1];
-                        boundaries->ends[boundaryIndex] = indexes[i + 2];
+                        uint64_t boundaryIndex = boundaries->size;
+                        boundaries->begins[boundaryIndex] = indexes[i + 1] + 1;
+                        uint64_t nextRCurlyIndex = i + 2;
+                        while (tokens[indexes[nextRCurlyIndex]].token != TOK_OP_RCURLY)
+                        {
+                                nextRCurlyIndex++;
+                        }
+                        boundaries->ends[boundaryIndex] = indexes[nextRCurlyIndex];
+
+                        if (boundaries->begins[boundaryIndex] >= boundaries->ends[boundaryIndex])
+                        {
+                                i = nextRCurlyIndex;
+                                continue;
+                        }
 
                         bool isScoped = false;
                         if (isScopedNode(node, &isScoped) != 0)
@@ -502,6 +524,7 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
                         }
 
                         boundaries->size++;
+                        i = nextRCurlyIndex;
                 }
 
                 if (node->parent == NULL)
@@ -586,11 +609,14 @@ int generateAST(LData_t lexerData, ANode_t* root)
         boundaries.ends[0] = lexerData.metadata.numTokens;
         boundaries.parentNodes[0] = root;
 
-        while (boundaries.size != 0)
+        while (boundaries.size > boundaries.offset)
         {
                 uint64_t begin = boundaries.begins[boundaries.offset];
                 uint64_t end = boundaries.ends[boundaries.offset];
                 ANode_t* parent = boundaries.parentNodes[boundaries.offset];
+
+                fprintf(stderr, "Processing boundary %lu: begin=%lu, end=%lu, size=%lu\n", 
+                boundaries.offset, begin, end, boundaries.size);
 
                 uint64_t numIndexesScope = 0;
                 if (splitByScope(lexerData.tokens, indexesScope, &numIndexesScope,
@@ -614,7 +640,6 @@ int generateAST(LData_t lexerData, ANode_t* root)
                         return 1;
                 }
 
-                boundaries.size--;
                 boundaries.offset++;
         }
 
