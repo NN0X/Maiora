@@ -7,6 +7,9 @@
 #include "../lexer/lexer.h"
 #include "../lexer/token.h"
 
+// TODO: merge splitByScope and splitBySColon
+// FIX: fix splitting so depths are handled correctly
+
 int splitByScope(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint64_t begin, uint64_t end)
 {
         if (tokens == NULL)
@@ -616,7 +619,7 @@ int generateAST(LData_t lexerData, ANode_t* root)
                 ANode_t* parent = boundaries.parentNodes[boundaries.offset];
                 ANTypes_t parentType = parent->type;
 
-                fprintf(stderr, "Processing boundary %lu: begin=%lu, end=%lu, size=%lu, type=%d\n", 
+                printf("Processing boundary %lu: begin=%lu, end=%lu, size=%lu, type=%d\n", 
                 boundaries.offset, begin, end, boundaries.size, parentType);
 
                 uint64_t numIndexesScope = 0;
