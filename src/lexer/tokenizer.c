@@ -12,7 +12,15 @@ int posCompare(const void* a, const void* b)
 {
         LTok_t* tokenA = (LTok_t*)a;
         LTok_t* tokenB = (LTok_t*)b;
-        if (tokenA->pos < tokenB->pos)
+        if (tokenA->token == TOK_META_BEGIN)
+        {
+                return -1;
+        }
+        else if (tokenB->token == TOK_META_BEGIN)
+        {
+                return 1;
+        }
+        else if (tokenA->pos < tokenB->pos)
         {
                 return -1;
         }
@@ -35,7 +43,15 @@ int posAndLineCompare(const void* a, const void* b)
 {
         LTok_t* tokenA = (LTok_t*)a;
         LTok_t* tokenB = (LTok_t*)b;
-        if (tokenA->line < tokenB->line)
+        if (tokenA->token == TOK_META_BEGIN)
+        {
+                return -1;
+        }
+        else if (tokenB->token == TOK_META_BEGIN)
+        {
+                return 1;
+        }
+        else if (tokenA->line < tokenB->line)
         {
                 return -1;
         }
@@ -67,7 +83,7 @@ void sortTokensByPosAndLine(LTok_t* tokens, uint64_t num)
 
 int getTokenMatch(char* str)
 {
-        for (uint64_t i = 0; i < TOK_META_STR_BEGIN; i++)
+        for (uint64_t i = 1; i < TOK_META_STR_BEGIN; i++)
         {
                 if (strcmp(str, TOKENS[i]) == 0)
                 {
@@ -193,8 +209,6 @@ int getFirstLongestTokenFit(char** fit, char** beforefit, char** afterfit, LTok_
 
 int filterStrings(LTok_t** tokens, uint64_t *num)
 {
-        // TODO: string filtering phase (take care of TOK_STR_STUB that are actual strings - so TOK_LIT_CHAR)
-
         LTok_t* newTokens = (LTok_t*)malloc(sizeof(LTok_t) * MAX_STATEMENT_LEN);
         if (newTokens == NULL)
         {
@@ -358,8 +372,6 @@ uint8_t literalLookAhead(LTok_t* tokens, uint64_t num, uint64_t index)
 
 int filterLiterals(LTok_t** tokens, uint64_t *num)
 {
-        // TODO: literation phase (take care of literals that are not chars)
-
         for (uint64_t i = 0; i < *num; i++)
         {
                 LTok_t currentToken = (*tokens)[i];
@@ -494,8 +506,6 @@ int filterLiterals(LTok_t** tokens, uint64_t *num)
 
 int filterIds(LTok_t* tokens, uint64_t num)
 {
-        // TODO: id phase (take care of ids)
-
         for (uint64_t i = 0; i < num; i++)
         {
                 if (tokens[i].token == TOK_STR_STUB)
@@ -782,7 +792,14 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
         }
         metadata->numTokens = 0;
 
-        // INFO: statement is a line of code between semicolons or before curlies
+        LTok_t beginToken;
+        beginToken.token = TOK_META_BEGIN;
+        beginToken.data = NULL;
+        beginToken.len = 0;
+        beginToken.line = 0;
+        beginToken.pos = 0;
+        lexerData->tokens[0] = beginToken;
+        metadata->numTokens++;
 
         uint64_t statementNum = 0;
         uint64_t line = 1;
