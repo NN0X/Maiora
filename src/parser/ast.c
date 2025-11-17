@@ -7,7 +7,6 @@
 #include "../lexer/lexer.h"
 #include "../lexer/token.h"
 
-
 // FIX: somewhere there is an indexing error causing boundaries mismatch
 int splitByGroups(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint64_t begin, uint64_t end)
 {
@@ -56,7 +55,7 @@ int splitByGroups(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint6
                         case TOK_OP_LCURLY:
                                 if (depth == 0)
                                 {
-                                        indexes[(*numIndexes)] = i;
+                                        indexes[*numIndexes] = i;
                                         (*numIndexes)++;
                                 }
                                 depth++;
@@ -65,14 +64,14 @@ int splitByGroups(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint6
                                 depth--;
                                 if (depth == 0)
                                 {
-                                        indexes[(*numIndexes)] = i;
+                                        indexes[*numIndexes] = i;
                                         (*numIndexes)++;
                                 }
                                 break;
                         case TOK_OP_SEMICOLON:
                                 if (depth == 0)
                                 {
-                                        indexes[(*numIndexes)] = i;
+                                        indexes[*numIndexes] = i;
                                         (*numIndexes)++;
                                 }
                                 break;
@@ -80,9 +79,6 @@ int splitByGroups(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint6
                                 break;
                 }
         }
-
-        indexes[(*numIndexes)] = end;
-        (*numIndexes)++;
 
         if (depth != 0)
         {
@@ -438,7 +434,7 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
                 if (i < numIndexes - 2 && tokens[indexes[i + 1]].token == TOK_OP_LCURLY)
                 {
                         uint64_t boundaryIndex = boundaries->size;
-                        boundaries->begins[boundaryIndex] = indexes[i + 1] + 1;
+                        boundaries->begins[boundaryIndex] = indexes[i + 1];
                         uint64_t nextRCurlyIndex = i + 2;
                         while (tokens[indexes[nextRCurlyIndex]].token != TOK_OP_RCURLY)
                         {
@@ -483,7 +479,6 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
                         }
 
                         boundaries->size++;
-                        i = nextRCurlyIndex;
                 }
 
                 if (node->parent == NULL)
@@ -576,6 +571,11 @@ int generateAST(LData_t lexerData, ANode_t* root)
                 {
                         fprintf(stderr, "splitByGroups failed.\n");
                         return 1;
+                }
+
+                for (uint64_t i = 0; i < numIndexes; i++)
+                {
+                        printf("Index %lu: %lu Token: %s\n", i, indexes[i], TOKENS[lexerData.tokens[indexes[i]].token]);
                 }
 
                 if (generateNodes(lexerData.tokens, indexes, numIndexes, parent, &boundaries) != 0)

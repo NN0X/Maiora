@@ -5,6 +5,8 @@
 #include "../defines.h"
 #include "../lexer/lexer.h"
 
+#include "../lexer/token.h"
+
 int loadTokensFromFile(LData_t* lexerData, const char* filename)
 {
         uint64_t nameSize = strlen(filename);
