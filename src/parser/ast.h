@@ -172,6 +172,8 @@ typedef struct PassesBoundaries
         ANode_t** parentNodes;
 } PBound_t;
 
+int generateFuncDeclNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node);
+
 int generateAST(LData_t lexerData, ANode_t* root);
 
 #endif // AST_H

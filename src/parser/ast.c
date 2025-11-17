@@ -144,6 +144,20 @@ int generateEmptyNode(ANode_t* node)
         return 0;
 }
 
+int generateFuncDeclNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
+{
+        if (tokens == NULL)
+        {
+                return 1;
+        }
+        if (node == NULL)
+        {
+                return 1;
+        }
+
+        return 0;
+}
+
 int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
 {
         if (tokens == NULL)
@@ -245,10 +259,10 @@ int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
 
         if (isFuncDecl)
         {
-                /*if (generateFuncDeclNode() != 0)
+                if (generateFuncDeclNode(tokens, begin, end, node) != 0)
                 {
                         return 1;
-                }*/
+                }
                 node->type = AST_FUNC_DECLARE;
                 printf("is func decl\n");
         }
