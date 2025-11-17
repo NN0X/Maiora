@@ -7,7 +7,6 @@
 #include "../lexer/lexer.h"
 #include "../lexer/token.h"
 
-// FIX: somewhere there is an indexing error causing boundaries mismatch
 int splitByGroups(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint64_t begin, uint64_t end)
 {
         if (tokens == NULL)
@@ -28,7 +27,7 @@ int splitByGroups(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint6
 
         uint64_t depth = 0;
         bool inDquotes = false;
-        for (uint64_t i = begin; i < end; i++)
+        for (uint64_t i = begin; i <= end; i++)
         {
                 TTypes_t token = tokens[i].token;
                 if (token == TOK_OP_DQUOTE)
@@ -44,6 +43,10 @@ int splitByGroups(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint6
                 switch (token)
                 {
                         case TOK_META_BEGIN:
+                                indexes[*numIndexes] = i;
+                                (*numIndexes)++;
+                                break;
+                        case TOK_META_END:
                                 indexes[*numIndexes] = i;
                                 (*numIndexes)++;
                                 break;
@@ -150,7 +153,7 @@ int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
                 return 1;
         }
 
-        if (begin == end)
+        if (begin == end - 1)
         {
                 if (generateEmptyNode(node) != 0)
                 {
@@ -165,6 +168,7 @@ int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
         bool containsVisibilitySpecifier = false;
         bool containsPars = false;
         bool containsAssign = false;
+        bool containsNone = false;
         bool containsType = false;
         bool containsStatementKeyword = false;
         bool containsID = false;
@@ -172,7 +176,7 @@ int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
         for (uint64_t i = begin + 1; i < end; i++)
         {
                 TTypes_t type = tokens[i].token;
-                printf("Token: %s\n", TOKENS[type]);
+                //printf("Token: %s\n", TOKENS[type]);
                 if (type == TOK_KEYW_ENTRY)
                 {
                         containsEntry = true;
@@ -189,6 +193,10 @@ int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
                 else if (type == TOK_OP_ASSIGN)
                 {
                         containsAssign = true;
+                }
+                else if (type == TOK_TYPE_NONE)
+                {
+                        containsNone = true;
                 }
                 else if (type > TOK_TYPE_NONE && type <= TOK_TYPE_UTF8)
                 {
@@ -221,7 +229,7 @@ int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
         {
                 isVarDecl = true;
         }
-        if (containsType && containsVisibilitySpecifier && containsID && containsPars)
+        if ((containsNone || containsType) && containsVisibilitySpecifier && containsID && containsPars)
         {
                 isFuncDecl = true;
         }
@@ -403,7 +411,7 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
                 return 1;
         }
 
-        for (uint64_t i = 0; i < numIndexes - 1; i++)
+        for (uint64_t i = 0; i < numIndexes - 1; i+=2)
         {
                 ANode_t* node = (ANode_t*)malloc(sizeof(ANode_t));
                 if (node == NULL)
@@ -412,13 +420,7 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
                         return 1;
                 }
 
-                uint64_t beginIndex = indexes[i];
-                if (beginIndex > 0)
-                {
-                        beginIndex++;
-                }
-
-                if (generateNode(tokens, beginIndex, indexes[i + 1], node) != 0)
+                if (generateNode(tokens, indexes[i], indexes[i + 1], node) != 0)
                 {
                         fprintf(stderr, "generateNode failed.\n");
                         return 1;
@@ -429,17 +431,16 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
                 if (i < numIndexes - 2 && tokens[indexes[i + 1]].token == TOK_OP_LCURLY)
                 {
                         uint64_t boundaryIndex = boundaries->size;
-                        boundaries->begins[boundaryIndex] = indexes[i + 1];
+                        boundaries->begins[boundaryIndex] = indexes[i + 1] + 1;
                         uint64_t nextRCurlyIndex = i + 2;
                         while (tokens[indexes[nextRCurlyIndex]].token != TOK_OP_RCURLY)
                         {
                                 nextRCurlyIndex++;
                         }
-                        boundaries->ends[boundaryIndex] = indexes[nextRCurlyIndex];
+                        boundaries->ends[boundaryIndex] = indexes[nextRCurlyIndex] - 1;
 
                         if (boundaries->begins[boundaryIndex] >= boundaries->ends[boundaryIndex])
                         {
-                                i = nextRCurlyIndex;
                                 continue;
                         }
 
@@ -548,7 +549,7 @@ int generateAST(LData_t lexerData, ANode_t* root)
                 return 1;
         }
         boundaries.begins[0] = 0;
-        boundaries.ends[0] = lexerData.metadata.numTokens;
+        boundaries.ends[0] = lexerData.metadata.numTokens - 1;
         boundaries.parentNodes[0] = root;
 
         while (boundaries.size > boundaries.offset)
@@ -558,8 +559,8 @@ int generateAST(LData_t lexerData, ANode_t* root)
                 ANode_t* parent = boundaries.parentNodes[boundaries.offset];
                 ANTypes_t parentType = parent->type;
 
-                printf("Processing boundary %lu: begin=%lu, end=%lu, size=%lu, type=%d\n", 
-                boundaries.offset, begin, end, boundaries.size, parentType);
+                //printf("Processing boundary %lu: begin=%lu, end=%lu, size=%lu, type=%d\n", 
+                //boundaries.offset, begin, end, boundaries.size, parentType);
 
                 uint64_t numIndexes = 0;
                 if (splitByGroups(lexerData.tokens, indexes, &numIndexes, begin, end) != 0)
@@ -568,10 +569,10 @@ int generateAST(LData_t lexerData, ANode_t* root)
                         return 1;
                 }
 
-                for (uint64_t i = 0; i < numIndexes; i++)
+                /*for (uint64_t i = 0; i < numIndexes; i++)
                 {
                         printf("Index %lu: %lu Token: %s\n", i, indexes[i], TOKENS[lexerData.tokens[indexes[i]].token]);
-                }
+                }*/
 
                 if (generateNodes(lexerData.tokens, indexes, numIndexes, parent, &boundaries) != 0)
                 {

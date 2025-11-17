@@ -107,5 +107,11 @@ int loadTokensFromFile(LData_t* lexerData, const char* filename)
 
         lexerData->metadata = metadata;
 
+        // print all tokens for debugging
+        /*for (uint64_t i = 0; i < metadata.numTokens; i++)
+        {
+                printf("Token %lu %s\n", i, TOKENS[lexerData->tokens[i].token]);
+        }*/
+
         return 0;
 }
