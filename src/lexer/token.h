@@ -142,6 +142,7 @@ typedef enum TokenTypes
 
         TOK_ID,                 // variable_name
 
+        TOK_META_END,           // end of token stream
         TOK_META_NUM,
 } TTypes_t;
 
