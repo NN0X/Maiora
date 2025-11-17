@@ -7,9 +7,11 @@ typedef enum TokenTypes
 {
         TOK_INVALID = -1,
 
+        TOK_META_BEGIN = 0,     // beginning of token stream
+
         // --- KEYWORDS ---
 
-        TOK_KEYW_RETURN = 0,    // return
+        TOK_KEYW_RETURN,        // return
 
         // modifiers
         TOK_KEYW_PUBLIC,        // public
