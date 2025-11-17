@@ -7,62 +7,72 @@
 #include "../lexer/lexer.h"
 #include "../lexer/token.h"
 
-// TODO: merge splitByScope and splitBySColon
-// FIX: fix splitting so depths are handled correctly
 
-int splitByScope(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint64_t begin, uint64_t end)
+// FIX: somewhere there is an indexing error causing boundaries mismatch
+int splitByGroups(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint64_t begin, uint64_t end)
 {
         if (tokens == NULL)
         {
-                fprintf(stderr, "splitByScope: tokens is NULL.\n");
+                fprintf(stderr, "splitByGroups: tokens is NULL.\n");
                 return 1;
         }
         if (indexes == NULL)
         {
-                fprintf(stderr, "splitByScope: indexes is NULL.\n");
+                fprintf(stderr, "splitByGroups: indexes is NULL.\n");
                 return 1;
         }
         if (numIndexes == NULL)
         {
-                fprintf(stderr, "splitByScope: numIndexes is NULL.\n");
+                fprintf(stderr, "splitByGroups: numIndexes is NULL.\n");
                 return 1;
         }
 
-        uint64_t numOpenScopes = 0;
-        uint64_t numCloseScopes = 0;
+        uint64_t depth = 0;
+        bool inDquotes = false;
 
-        indexes[*numIndexes] = begin;
+        indexes[0] = begin;
         (*numIndexes)++;
 
-        bool isInsideFormattedString = false;
+        if (tokens[begin].token == TOK_OP_LCURLY)
+        {
+                depth++;
+        }
 
         for (uint64_t i = begin + 1; i < end; i++)
         {
-                TTypes_t type = tokens[i].token;
-                if (type == TOK_OP_DQUOTE)
+                TTypes_t token = tokens[i].token;
+                if (token == TOK_OP_DQUOTE)
                 {
-                        isInsideFormattedString = !isInsideFormattedString;
+                        inDquotes = !inDquotes;
+                        continue;
                 }
-                if (isInsideFormattedString)
+                if (inDquotes)
                 {
                         continue;
                 }
 
-                switch (type)
+                switch (token)
                 {
                         case TOK_OP_LCURLY:
-                                if (numOpenScopes == numCloseScopes)
+                                if (depth == 0)
                                 {
-                                        indexes[*numIndexes] = i;
+                                        indexes[(*numIndexes)] = i;
                                         (*numIndexes)++;
                                 }
-                                numOpenScopes++;
+                                depth++;
                                 break;
                         case TOK_OP_RCURLY:
-                                numCloseScopes++;
-                                if (numOpenScopes != 0 && numOpenScopes == numCloseScopes)
+                                depth--;
+                                if (depth == 0)
                                 {
-                                        indexes[*numIndexes] = i;
+                                        indexes[(*numIndexes)] = i;
+                                        (*numIndexes)++;
+                                }
+                                break;
+                        case TOK_OP_SEMICOLON:
+                                if (depth == 0)
+                                {
+                                        indexes[(*numIndexes)] = i;
                                         (*numIndexes)++;
                                 }
                                 break;
@@ -71,67 +81,13 @@ int splitByScope(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint64
                 }
         }
 
-        indexes[*numIndexes] = end;
+        indexes[(*numIndexes)] = end;
         (*numIndexes)++;
 
-        if (numOpenScopes != numCloseScopes)
+        if (depth != 0)
         {
-                fprintf(stderr, "Number of '{' doesn't match number of '}'.\n");
+                fprintf(stderr, "splitByGroups: Number of { and } not matching.\n");
                 return 1;
-        }
-
-        return 0;
-}
-
-int splitBySColon(LTok_t* tokens, uint64_t* newIndexes, uint64_t* numNewIndexes,
-                  uint64_t* indexes, uint64_t numIndexes, uint64_t begin, uint64_t end)
-{
-        if (tokens == NULL)
-        {
-                fprintf(stderr, "splitBySColon: tokens is NULL.\n");
-                return 1;
-        }
-        if (indexes == NULL)
-        {
-                fprintf(stderr, "splitBySColon: indexes is NULL.\n");
-                return 1;
-        }
-        if (newIndexes == NULL)
-        {
-                fprintf(stderr, "splitBySColon: newIndexes is NULL.\n");
-                return 1;
-        }
-        if (numNewIndexes == NULL)
-        {
-                fprintf(stderr, "splitBySColon: numNewIndexes is NULL.\n");
-                return 1;
-        }
-
-        uint64_t currentIndex = 0;
-        uint64_t scopeDepth = 0;
-        for (uint64_t i = begin; i < end + 1; i++)
-        {
-                TTypes_t token = tokens[i].token;
-                if (indexes[currentIndex] == i)
-                {
-                        newIndexes[*numNewIndexes] = i;
-                        (*numNewIndexes)++;
-                        currentIndex++;
-                }
-                else if (token == TOK_OP_LCURLY)
-                {
-                        scopeDepth++;
-                }
-                else if (token == TOK_OP_RCURLY)
-                {
-                        scopeDepth--;
-                }
-                else if (token == TOK_OP_SEMICOLON && scopeDepth == 0)
-                {
-                        newIndexes[*numNewIndexes] = i;
-                        (*numNewIndexes)++;
-                }
-
         }
 
         return 0;
@@ -225,7 +181,7 @@ int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
         for (uint64_t i = begin; i < end; i++)
         {
                 TTypes_t type = tokens[i].token;
-                printf("Token: %d\n", type);
+                printf("Token: %s\n", TOKENS[type]);
                 if (type == TOK_KEYW_ENTRY)
                 {
                         containsEntry = true;
@@ -573,17 +529,10 @@ int generateAST(LData_t lexerData, ANode_t* root)
                 root->astData = (void*)astRootData;
         }
 
-        uint64_t* indexesScope = (uint64_t*)malloc(maxSize * sizeof(uint64_t));
-        if (indexesScope == NULL)
+        uint64_t* indexes = (uint64_t*)malloc(maxSize * sizeof(uint64_t));
+        if (indexes == NULL)
         {
-                fprintf(stderr, "malloc failed for indexesScope.\n");
-                return 1;
-        }
-
-        uint64_t* indexesSColon = (uint64_t*)malloc(maxSize * sizeof(uint64_t));
-        if (indexesSColon == NULL)
-        {
-                fprintf(stderr, "malloc failed for indexesSColon.\n");
+                fprintf(stderr, "malloc failed for indexes.\n");
                 return 1;
         }
 
@@ -622,23 +571,14 @@ int generateAST(LData_t lexerData, ANode_t* root)
                 printf("Processing boundary %lu: begin=%lu, end=%lu, size=%lu, type=%d\n", 
                 boundaries.offset, begin, end, boundaries.size, parentType);
 
-                uint64_t numIndexesScope = 0;
-                if (splitByScope(lexerData.tokens, indexesScope, &numIndexesScope,
-                                 begin, end) != 0)
+                uint64_t numIndexes = 0;
+                if (splitByGroups(lexerData.tokens, indexes, &numIndexes, begin, end) != 0)
                 {
-                        fprintf(stderr, "splitByScope failed.\n");
+                        fprintf(stderr, "splitByGroups failed.\n");
                         return 1;
                 }
 
-                uint64_t numIndexesSColon = 0;
-                if (splitBySColon(lexerData.tokens, indexesSColon, &numIndexesSColon,
-                                  indexesScope, numIndexesScope, begin, end) != 0)
-                {
-                        fprintf(stderr, "splitBySColon failed.\n");
-                        return 1;
-                }
-
-                if (generateNodes(lexerData.tokens, indexesSColon, numIndexesSColon, parent, &boundaries) != 0)
+                if (generateNodes(lexerData.tokens, indexes, numIndexes, parent, &boundaries) != 0)
                 {
                         fprintf(stderr, "generateNodes failed.\n");
                         return 1;
