@@ -27,6 +27,7 @@ int splitByGroups(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint6
 
         uint64_t depth = 0;
         bool inDquotes = false;
+        bool inRootScope = false;
         for (uint64_t i = begin; i <= end; i++)
         {
                 TTypes_t token = tokens[i].token;
@@ -43,6 +44,7 @@ int splitByGroups(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint6
                 switch (token)
                 {
                         case TOK_META_BEGIN:
+                                inRootScope = true;
                                 indexes[*numIndexes] = i;
                                 (*numIndexes)++;
                                 break;
@@ -67,8 +69,10 @@ int splitByGroups(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint6
                                 }
                                 break;
                         case TOK_OP_SEMICOLON:
-                                if (depth == 0)
+                                if (depth == 1 && !inRootScope)
                                 {
+                                        indexes[*numIndexes] = i;
+                                        (*numIndexes)++;
                                         indexes[*numIndexes] = i;
                                         (*numIndexes)++;
                                 }
@@ -160,7 +164,7 @@ int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
                         fprintf(stderr, "generateEmptyNode failed.\n");
                         return 1;
                 }
-                printf("is empty\n");
+                //printf("is empty\n");
                 return 0;
         }
 
@@ -428,21 +432,16 @@ int generateNodes(LTok_t* tokens, uint64_t* indexes, uint64_t numIndexes, ANode_
 
                 node->parent = parent;
 
-                if (i < numIndexes - 2 && tokens[indexes[i + 1]].token == TOK_OP_LCURLY)
+                if (tokens[indexes[i + 1]].token == TOK_OP_LCURLY)
                 {
                         uint64_t boundaryIndex = boundaries->size;
-                        boundaries->begins[boundaryIndex] = indexes[i + 1] + 1;
+                        boundaries->begins[boundaryIndex] = indexes[i + 1];
                         uint64_t nextRCurlyIndex = i + 2;
                         while (tokens[indexes[nextRCurlyIndex]].token != TOK_OP_RCURLY)
                         {
                                 nextRCurlyIndex++;
                         }
-                        boundaries->ends[boundaryIndex] = indexes[nextRCurlyIndex] - 1;
-
-                        if (boundaries->begins[boundaryIndex] >= boundaries->ends[boundaryIndex])
-                        {
-                                continue;
-                        }
+                        boundaries->ends[boundaryIndex] = indexes[nextRCurlyIndex];
 
                         bool isScoped = false;
                         if (isScopedNode(node, &isScoped) != 0)
