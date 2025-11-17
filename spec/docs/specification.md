@@ -1,4 +1,4 @@
-# Maiora Specification v0.1.2alpha
+# Maiora Specification v0.1.3alpha
 
 ## Types
 
@@ -280,12 +280,15 @@ The address keyword is used to indicate variable storing a memory address of a h
 The reference keyword is used to indicate variable storing a reference to an existing address or variable.
 
 Both follow these rules:
-- address is mutable, reference is immutable
-- address cannot be reassigned, reference can be reassigned
+- value under address is mutable, value under reference is immutable
 - reference is created from an existing address or variable
 - reference has inherently the same scope as the variable it references
+- both reference is immutable (cannot be reassigned)
+- address can be reallocated with heap keyword but cannot be reassigned to another address
 - both address and reference cannot be returned from functions
-- address is automatically freed when going out of scope
+- address is automatically freed when going out of scope and when reallocated with heap keyword
+- reference to an address is pointing to the address variable not to the value under the address
+- reading reference to an address implicitly reads the value under the address
 
 Example of using address and reference keywords:
 ```maiora
@@ -334,7 +337,7 @@ private none executeFunction(function none f)
 
 ### instance
 
-The instance keyword is used to create an instance of a function. This allows assigning a function instance to a variable. When declaring a variable with the instance keyword the variable will NOT take the return value of the function, but rather the function itself. This means that the variable can be used to use the function as a data object like a C structure or C++ class. All instances are allocated on the heap and follow the same rules as addresses.
+The instance keyword is used to create an instance of a function. This allows assigning a function instance to a variable. When declaring a variable with the instance keyword the variable will NOT take the return value of the function, but rather the function itself. This means that the variable can be used to use the function as a data object like a C structure or C++ class. Instances by default are allocated on the stack, unless declared with heap keyword. When stack allocated instance is passed to another function, it is implicitly passed by reference. All instances follow the same rules as reference variables.
 
 Example of using instance keyword:
 ```maiora
@@ -346,7 +349,7 @@ private none printMessage(instance message)
 entry sint64 main(none)
 {
     private instance printHello = printMessage(ascii"Hello, Maiora!"); // this also calls the function
-    private instance printGoodbye = printMessage(ascii"Goodbye, Maiora!"); // this also calls the function
+    private instance printGoodbye = heap printMessage(ascii"Goodbye, Maiora!"); // this also calls the function
 
     return 0s;
 }
