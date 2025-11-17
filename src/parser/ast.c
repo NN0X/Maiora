@@ -28,16 +28,7 @@ int splitByGroups(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint6
 
         uint64_t depth = 0;
         bool inDquotes = false;
-
-        indexes[0] = begin;
-        (*numIndexes)++;
-
-        if (tokens[begin].token == TOK_OP_LCURLY)
-        {
-                depth++;
-        }
-
-        for (uint64_t i = begin + 1; i < end; i++)
+        for (uint64_t i = begin; i < end; i++)
         {
                 TTypes_t token = tokens[i].token;
                 if (token == TOK_OP_DQUOTE)
@@ -52,6 +43,10 @@ int splitByGroups(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint6
 
                 switch (token)
                 {
+                        case TOK_META_BEGIN:
+                                indexes[*numIndexes] = i;
+                                (*numIndexes)++;
+                                break;
                         case TOK_OP_LCURLY:
                                 if (depth == 0)
                                 {
@@ -174,7 +169,7 @@ int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
         bool containsStatementKeyword = false;
         bool containsID = false;
 
-        for (uint64_t i = begin; i < end; i++)
+        for (uint64_t i = begin + 1; i < end; i++)
         {
                 TTypes_t type = tokens[i].token;
                 printf("Token: %s\n", TOKENS[type]);
