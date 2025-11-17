@@ -942,6 +942,15 @@ int tokenizeSource(LData_t* lexerData, char* src, LMeta_t* metadata)
 
         sortTokensByPosAndLine(lexerData->tokens, metadata->numTokens);
 
+        LTok_t endToken;
+        endToken.token = TOK_META_END;
+        endToken.data = NULL;
+        endToken.len = 0;
+        endToken.line = line;
+        endToken.pos = column + 1;
+        lexerData->tokens[metadata->numTokens] = endToken;
+        metadata->numTokens++;
+
         free(statement);
 
         return 0;
