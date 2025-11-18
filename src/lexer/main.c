@@ -15,32 +15,35 @@ int main(int argc, char* argv[])
 
         if (argc != 3)
         {
-                fprintf(stderr, "Usage: %s <input_file>.mai <output_file>.tok\n", argv[0]);
+                ERROR_LEX(LEX_ARGS_INCORRECT);
                 return 1;
         }
 
         LMeta_t metadata;
 
         FILE* file;
-        if (openSourceFile(&file, argv[1], &metadata) == 1)
+        LErr_t code = openSourceFile(&file, argv[1], &metadata);
+        if (code != LEX_SUCCESS)
         {
-                fprintf(stderr, "Failed to open source file.\n");
+                ERROR_LEX(code);
                 return 1;
         }
 
         char* src;
-        if (loadSourceFile(&src, file, &metadata) == 1)
+        code = loadSourceFile(&src, file, &metadata);
+        if (code != LEX_SUCCESS)
         {
-                fprintf(stderr, "Failed to load source file.\n");
+                ERROR_LEX(code);
                 fclose(file);
                 return 1;
         }
         fclose(file);
 
         LData_t lexerData;
-        if (tokenizeSource(&lexerData, src, &metadata) == 1)
+        code = tokenizeSource(&lexerData, src, &metadata);
+        if (code != LEX_SUCCESS)
         {
-                fprintf(stderr, "Failed to tokenize source file.\n");
+                ERROR_LEX(code);
                 free(src);
                 return 1;
         }
@@ -50,9 +53,10 @@ int main(int argc, char* argv[])
         writeTokensToOut(stdout, &metadata, &lexerData);
         // ----------------
 
-        if (writeTokensToFile(&metadata, &lexerData, argv[2]) == 1)
+        code = writeTokensToFile(&metadata, &lexerData, argv[2]);
+        if (code != LEX_SUCCESS)
         {
-                fprintf(stderr, "Failed to write tokens to output file.\n");
+                ERROR_LEX(code);
                 for (uint64_t i = 0; i < metadata.numTokens; i++)
                 {
                         free(lexerData.tokens[i].data);
