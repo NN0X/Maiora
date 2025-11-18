@@ -7,6 +7,8 @@
 #include "token.h"
 #include "writer.h"
 
+#include "../errors.h"
+
 int main(int argc, char* argv[])
 {
         // expected call: ./main <input_file>.mai <output_file>.tok
