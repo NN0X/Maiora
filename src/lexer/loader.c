@@ -7,19 +7,21 @@
 #include "loader.h"
 #include "lexer.h"
 
+#include "../errors.h"
+
 int openSourceFile(FILE** file, char* filename, LMeta_t* metadata)
 {
         uint64_t nameSize = strlen(filename);
         if (nameSize == 0)
         {
-                fprintf(stderr, "nameSize cannot be 0\n");
-                return 1;
+                ERROR_LEX_VERBOSE("openSourceFile: nameSize cannot be 0\n", NULL);
+                return LEX_LOADER_FILENAME_ZERO;
         }
 
         if (nameSize < 4)
         {
-                fprintf(stderr, "nameSize cannot be smaller than 4\n");
-                return 1;
+                ERROR_LEX_VERBOSE("openSourceFile: nameSize cannot be smaller than 4\n", NULL);
+                return LEX_LOADER_FILENAME_TOO_SMALL;
         }
 
         char extension[5] = {filename[nameSize - 4], filename[nameSize - 3],
@@ -27,39 +29,39 @@ int openSourceFile(FILE** file, char* filename, LMeta_t* metadata)
 
         if (strcmp(extension, ".mai") != 0)
         {
-                fprintf(stderr, "Provided file is not a Maiora source file.\n");
-                return 1;
+                ERROR_LEX_VERBOSE("openSourceFile: Provided file is not a Maiora source file.\n", NULL);
+                return LEX_LOADER_FILE_EXT_INCORRECT;
         }
 
         char *srcname = (char*)malloc(MAX_FILE_NAME_LEN + 1);
         if (srcname == NULL)
         {
-                fprintf(stderr, "Memory allocation failed for srcname.\n");
-                return 1;
+                ERROR_LEX_VERBOSE("openSourceFile: Memory allocation failed for srcname.\n", NULL);
+                return LEX_MALLOC_FAIL;
         }
 
 
         if (nameSize >= MAX_FILE_NAME_LEN)
         {
-                fprintf(stderr, "Filename too long: %s\n", filename);
-                return 1;
+                ERROR_LEX_VERBOSE("openSourceFile: Filename too long: %s\n", filename);
+                return LEX_LOADER_FILENAME_TOO_BIG;
         }
         strcpy(srcname, filename);
 
         *file = fopen(srcname, "r");
         if (*file == NULL)
         {
-                fprintf(stderr, "File: %s could not be opened.\n", filename);
+                ERROR_LEX_VERBOSE("openSourceFile: File: %s could not be opened.\n", filename);
                 free(srcname);
-                return 1;
+                return LEX_LOADER_FAILED_OPEN;
         }
 
         metadata->filename = (char*)malloc(nameSize + 1);
         if (metadata->filename == NULL)
         {
-                fprintf(stderr, "Memory allocation failed for metadata->filename.\n");
+                ERROR_LEX_VERBOSE("openSourceFile: Memory allocation failed for metadata->filename.\n", NULL);
                 free(srcname);
-                return 1;
+                return LEX_MALLOC_FAIL;
         }
 
         strcpy(metadata->filename, srcname);
@@ -67,7 +69,7 @@ int openSourceFile(FILE** file, char* filename, LMeta_t* metadata)
 
         free(srcname);
 
-        return 0;
+        return LEX_SUCCESS;
 }
 
 int loadSourceFile(char** src, FILE* file, LMeta_t* metadata)
@@ -77,31 +79,31 @@ int loadSourceFile(char** src, FILE* file, LMeta_t* metadata)
         fseek(file, 0, SEEK_SET);
         if (fileSize == 0)
         {
-                fprintf(stderr, "File size is 0.\n");
-                return 1;
+                ERROR_LEX_VERBOSE("loadSourceFile: File size is 0.\n", NULL);
+                return LEX_LOADER_FILENAME_ZERO;
         }
         else if (fileSize < 0)
         {
-                fprintf(stderr, "ftell failed.\n");
-                return 1;
+                ERROR_LEX_VERBOSE("loadSourceFile: ftell failed.\n", NULL);
+                return LEX_LOADER_FTELL_FAIL;
         }
 
         *src = (char*)malloc(fileSize + 1);
         if (*src == NULL)
         {
-                fprintf(stderr, "Memory allocation failed for data.\n");
-                return 1;
+                ERROR_LEX_VERBOSE("loadSourceFile: Memory allocation failed for data.\n", NULL);
+                return LEX_MALLOC_FAIL;
         }
 
         uint64_t size = fread(*src, 1, fileSize, file);
         (*src)[fileSize] = '\0';
         if (size != fileSize)
         {
-                fprintf(stderr, "Wrong amount of data read. Got: %lu Expected: %lu\n", size, fileSize);
-                return 1;
+                ERROR_LEX_VERBOSE("loadSourceFile: Wrong amount of data read. Got: %lu Expected: %lu\n", size, fileSize);
+                return LEX_LOADER_DATAREAD_MISMATCH;
         }
 
         metadata->fileSize = fileSize;
 
-        return 0;
+        return LEX_SUCCESS;
 }
