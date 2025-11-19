@@ -7,7 +7,7 @@
 #define MAX_FILE_NAME_LEN 1024
 #define MAX_STATEMENT_LEN 1024
 
+#define LOG_VERBOSE
 #define ERROR_VERBOSE
-
 
 #endif // DEFINES_H

@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
 
         if (argc != 3)
         {
-                ERROR_LEX(LEX_ARGS_INCORRECT);
+                ERROR_LEX(LEX_ARGS_INCORRECT, argv[0]);
                 return 1;
         }
 
@@ -49,9 +49,9 @@ int main(int argc, char* argv[])
         }
         free(src);
 
-        // -- DEBUG INFO ---
+#ifdef LOG_VERBOSE
         writeTokensToOut(stdout, &metadata, &lexerData);
-        // ----------------
+#endif // LOG_VERBOSE
 
         code = writeTokensToFile(&metadata, &lexerData, argv[2]);
         if (code != LEX_SUCCESS)

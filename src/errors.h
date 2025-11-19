@@ -1,6 +1,9 @@
 #ifndef ERRORS_H
 #define ERRORS_H
 
+#include <stdio.h>
+#include <stdarg.h>
+
 #include "defines.h"
 
 typedef enum PreprocessorErrors
@@ -61,7 +64,15 @@ static const char* LEXER_ERROR_MSGS[LEX_META_ERROR_NUM] = {
         [LEX_WRITER_OUTPUT_SIZE_MISMATCH] = "Writer: Output size mismatch.\n",
 };
 
-#define ERROR_LEX(error, ...) fprintf(stderr, LEXER_ERROR_MSGS[error], ##__VA_ARGS__)
+static inline void printErrorLex(LErr_t error, ...)
+{
+        va_list args;
+        va_start(args, error);
+        vfprintf(stderr, LEXER_ERROR_MSGS[error], args);
+        va_end(args);
+}
+
+#define ERROR_LEX(error, ...) printErrorLex(error, ##__VA_ARGS__)
 #ifdef ERROR_VERBOSE
 #define ERROR_LEX_VERBOSE(msg, ...) fprintf(stderr, msg, ##__VA_ARGS__)
 #else
