@@ -85,6 +85,7 @@ typedef struct AstFunctionDeclare
 
 typedef enum VariableModifiers
 {
+        VAR_NONE,
         VAR_ADDRESS,
         VAR_REFERENCE,
 } VMods_t;
@@ -132,6 +133,7 @@ typedef struct AstStatement
         void* stmtData;
 } AStmt_t;
 
+// TODO: decide expression hierarchy
 typedef enum ExpressionTypes
 {
         EXPR_LITERAL,   // 5s
@@ -171,8 +173,6 @@ typedef struct PassesBoundaries
         uint64_t* ends;
         ANode_t** parentNodes;
 } PBound_t;
-
-int generateFuncDeclNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node);
 
 int generateAST(LData_t lexerData, ANode_t* root);
 

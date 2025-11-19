@@ -7,6 +7,8 @@
 #include "../lexer/lexer.h"
 #include "../lexer/token.h"
 
+// TODO: implement node generation functions
+
 int splitByGroups(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint64_t begin, uint64_t end)
 {
         if (tokens == NULL)
@@ -144,6 +146,7 @@ int generateEmptyNode(ANode_t* node)
         return 0;
 }
 
+// TODO: implement
 int generateFuncDeclNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
 {
         if (tokens == NULL)
@@ -154,6 +157,50 @@ int generateFuncDeclNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* 
         {
                 return 1;
         }
+
+        VTypes_t visibility = VIS_PRIVATE;
+        LTypes_t returnType;
+
+        AFDec_t* funcDeclData = (AFDec_t*)malloc(sizeof(AFDec_t));
+        if (funcDeclData == NULL)
+        {
+                fprintf(stderr, "malloc failed for funcDeclData.\n");
+                return 1;
+        }
+
+        bool nameParsed = false;
+        bool hasPars = false;
+
+        // TODO: here token loop
+
+        return 0;
+}
+
+int generateVarDeclNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
+{
+        if (tokens == NULL)
+        {
+                return 1;
+        }
+        if (node == NULL)
+        {
+                return 1;
+        }
+
+        VTypes_t visibility = VIS_PRIVATE;
+        VMods_t modifier = VAR_NONE;
+        LTypes_t varType;
+
+        AVDec_t* varDeclData = (AVDec_t*)malloc(sizeof(AVDec_t));
+        if (varDeclData == NULL)
+        {
+                fprintf(stderr, "malloc failed for varDeclData.\n");
+                return 1;
+        }
+
+        bool nameParsed = false;
+
+        // TODO: here token loop
 
         return 0;
 }
@@ -268,10 +315,10 @@ int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
         }
         else if (isVarDecl)
         {
-                /*if (generateVarDeclNode() != 0)
+                if (generateVarDeclNode(tokens, begin, end, node) != 0)
                 {
                         return 1;
-                }*/
+                }
                 node->type = AST_VAR_DECLARE;
                 printf("is var decl\n");
         }
