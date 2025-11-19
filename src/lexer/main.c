@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
         LErr_t code = openSourceFile(&file, argv[1], &metadata);
         if (code != LEX_SUCCESS)
         {
-                ERROR_LEX(code);
+                ERROR_LEX(code, NULL);
                 return 1;
         }
 
@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
         code = loadSourceFile(&src, file, &metadata);
         if (code != LEX_SUCCESS)
         {
-                ERROR_LEX(code);
+                ERROR_LEX(code, NULL);
                 fclose(file);
                 return 1;
         }
@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
         code = tokenizeSource(&lexerData, src, &metadata);
         if (code != LEX_SUCCESS)
         {
-                ERROR_LEX(code);
+                ERROR_LEX(code, NULL);
                 free(src);
                 return 1;
         }
@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
         code = writeTokensToFile(&metadata, &lexerData, argv[2]);
         if (code != LEX_SUCCESS)
         {
-                ERROR_LEX(code);
+                ERROR_LEX(code, NULL);
                 for (uint64_t i = 0; i < metadata.numTokens; i++)
                 {
                         free(lexerData.tokens[i].data);

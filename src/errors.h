@@ -72,9 +72,9 @@ static inline void printErrorLex(LErr_t error, ...)
         va_end(args);
 }
 
-#define ERROR_LEX(error, ...) printErrorLex(error, ##__VA_ARGS__)
+#define ERROR_LEX(error, ...) printErrorLex(error, __VA_ARGS__)
 #ifdef ERROR_VERBOSE
-#define ERROR_LEX_VERBOSE(msg, ...) fprintf(stderr, msg, ##__VA_ARGS__)
+#define ERROR_LEX_VERBOSE(msg, ...) fprintf(stderr, msg, __VA_ARGS__)
 #else
 #define ERROR_LEX_VERBOSE(msg, ...)
 #endif // ERROR_VERBOSE

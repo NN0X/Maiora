@@ -9,7 +9,7 @@
 
 #include "../errors.h"
 
-int openSourceFile(FILE** file, char* filename, LMeta_t* metadata)
+LErr_t openSourceFile(FILE** file, char* filename, LMeta_t* metadata)
 {
         uint64_t nameSize = strlen(filename);
         if (nameSize == 0)
@@ -72,7 +72,7 @@ int openSourceFile(FILE** file, char* filename, LMeta_t* metadata)
         return LEX_SUCCESS;
 }
 
-int loadSourceFile(char** src, FILE* file, LMeta_t* metadata)
+LErr_t loadSourceFile(char** src, FILE* file, LMeta_t* metadata)
 {
         fseek(file, 0, SEEK_END);
         int64_t fileSize = ftell(file);
@@ -88,22 +88,22 @@ int loadSourceFile(char** src, FILE* file, LMeta_t* metadata)
                 return LEX_LOADER_FTELL_FAIL;
         }
 
-        *src = (char*)malloc(fileSize + 1);
+        *src = (char*)malloc((uint64_t)fileSize + 1);
         if (*src == NULL)
         {
                 ERROR_LEX_VERBOSE("loadSourceFile: Memory allocation failed for data.\n", NULL);
                 return LEX_MALLOC_FAIL;
         }
 
-        uint64_t size = fread(*src, 1, fileSize, file);
+        uint64_t size = fread(*src, 1, (uint64_t)fileSize, file);
         (*src)[fileSize] = '\0';
-        if (size != fileSize)
+        if (size != (uint64_t)fileSize)
         {
                 ERROR_LEX_VERBOSE("loadSourceFile: Wrong amount of data read. Got: %lu Expected: %lu\n", size, fileSize);
                 return LEX_LOADER_DATAREAD_MISMATCH;
         }
 
-        metadata->fileSize = fileSize;
+        metadata->fileSize = (uint64_t)fileSize;
 
         return LEX_SUCCESS;
 }
