@@ -170,18 +170,136 @@ int generateFuncDeclNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* 
 
         // INFO:
         // possible layouts (in order of canonicity):
-        // 1. <visibility> <type> <module> <id> [params]
-        // 2. <visibility> <type> <id> [params]
-        // 3. <type> <module> <id> [params]
-        // 4. <type> <id> [params]
+        // 1. <visibility> <type> <id>::<id>([params])
+        // 2. <visibility> <type> <id>([params])
+        // 3. <type> <id>::<id>([params])
+        // 4. <type> <id>([params])
         // doesn't fit layout -> error
 
         uint8_t step = 0;
         bool requiresSpace = false;
+        bool requiresFromModule = false;
+        bool requiresLPar = false;
+        bool requiresRPar = false;
         for (uint64_t i = begin + 1; i < end; i++)
         {
                 TTypes_t token = tokens[i].token;
                 printf("<%s> ", TOKENS[token]);
+
+                if (requiresSpace && token != TOK_SPACE)
+                {
+                        fprintf(stderr, "expected <tok_space>, got <%s>.\n", TOKENS[token]);
+                        return 1;
+                }
+                if (token == TOK_SPACE && requiresSpace)
+                {
+                        requiresSpace = false;
+                        continue;
+                }
+                else if (token == TOK_SPACE)
+                {
+                        continue;
+                }
+
+                if (requiresFromModule && token != TOK_OP_FROM_MODULE)
+                {
+                        fprintf(stderr, "expected <::>.\n");
+                        return 1;
+                }
+                if (token == TOK_OP_FROM_MODULE && requiresFromModule)
+                {
+                        requiresFromModule = false;
+                        continue;
+                }
+
+                if (requiresLPar && token != TOK_OP_LPAR)
+                {
+                        fprintf(stderr, "expected <(>.\n");
+                        return 1;
+                }
+                if (token == TOK_OP_LPAR && requiresLPar)
+                {
+                        requiresLPar = false;
+                        continue;
+                }
+
+                if (requiresRPar && token != TOK_OP_RPAR)
+                {
+                        fprintf(stderr, "expected <)>.\n");
+                        return 1;
+                }
+                if (token == TOK_OP_RPAR && requiresRPar)
+                {
+                        requiresRPar = false;
+                        continue;
+                }
+
+                switch (step)
+                {
+                        case 0: // vis or type
+                                if (token >= TOK_KEYW_PUBLIC && token <= TOK_KEYW_ENTRY)
+                                {
+                                        // TODO: take care of vis
+                                        step = 1;
+                                }
+                                else if (token >= TOK_TYPE_NONE && token <= TOK_TYPE_UTF8)
+                                {
+                                        // TODO: take care of type
+                                        step = 2;
+                                }
+                                else
+                                {
+                                        fprintf(stderr, "expected vis or type.\n");
+                                        return 1;
+                                }
+                                requiresSpace = true;
+                                break;
+                        case 1: // type when vis present
+                                if (token < TOK_TYPE_NONE || token > TOK_TYPE_UTF8)
+                                {
+                                        fprintf(stderr, "expected type.\n");
+                                        return 1;
+                                }
+                                // TODO: take care of type
+                                step = 2;
+                                requiresSpace = true;
+                                break;
+                        case 2: // module or id
+                                if (token != TOK_ID)
+                                {
+                                        fprintf(stderr, "expected id.\n");
+                                        return 1;
+                                }
+                                if (i + 1 < end && tokens[i + 1].token == TOK_OP_FROM_MODULE)
+                                {
+                                        // TODO: take care of module
+                                        step = 3;
+                                        requiresFromModule = true;
+                                }
+                                else
+                                {
+                                        // TODO: take care of id
+                                        step = 4;
+                                        requiresLPar = true;
+                                }
+                                break;
+                        case 3: // id when module present
+                                if (token != TOK_ID)
+                                {
+                                        fprintf(stderr, "expected id.\n");
+                                        return 1;
+                                }
+                                // TODO: take care of id
+                                step = 4;
+                                requiresLPar = true;
+                                break;
+                        case 4: // initializer
+                                // TODO: take care of initializer
+                                break;
+                        default:
+                                fprintf(stderr, "unexpected step.\n");
+                                return 1;
+                }
         }
         printf("\n");
 
