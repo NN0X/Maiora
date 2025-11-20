@@ -247,7 +247,21 @@ static const char* TOKENS[TOK_META_NUM] = {
         [TOK_TYPE_FLOAT64] = "float64",
 
         [TOK_TYPE_ASCII] = "ascii",
-        [TOK_TYPE_UTF8] = "utf8"
+        [TOK_TYPE_UTF8] = "utf8",
+
+        // --- META ---
+        [TOK_META_BEGIN] = "tok_begin",
+        [TOK_SPACE] = "tok_space",
+        [TOK_LIT_INT] = "tok_int",
+        [TOK_LIT_SINT] = "tok_sint",
+        [TOK_LIT_UINT] = "tok_uint",
+        [TOK_LIT_BOOL] = "tok_bool",
+        [TOK_LIT_FLOAT] = "tok_float",
+        [TOK_LIT_FLOAT32] = "tok_float32",
+        [TOK_LIT_FLOAT64] = "tok_float64",
+        [TOK_LIT_CHAR] = "tok_char",
+        [TOK_ID] = "tok_id",
+        [TOK_META_END] = "tok_end",
 };
 
 #endif // TOKEN_H

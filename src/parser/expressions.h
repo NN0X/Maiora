@@ -124,4 +124,6 @@ typedef struct AstGroupExpression
         uint64_t bodyNum;
 } AGrpExpr_t;
 
+int generateExpressionNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node);
+
 #endif // EXPRESSIONS_H

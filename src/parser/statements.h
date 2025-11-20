@@ -89,5 +89,6 @@ typedef struct AstSwitchElseStatement
 int generateScopeNode(ANode_t* node);
 int isStatementScoped(ANode_t* node, bool* result);
 int linkNodeToStatement(ANode_t* node, ANode_t* parent);
+int generateStatementNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node);
 
 #endif // STATEMENTS_H

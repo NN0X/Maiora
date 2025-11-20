@@ -4,6 +4,7 @@
 
 #include "ast.h"
 #include "statements.h"
+#include "expressions.h"
 #include "../lexer/lexer.h"
 #include "../lexer/token.h"
 
@@ -146,7 +147,6 @@ int generateEmptyNode(ANode_t* node)
         return 0;
 }
 
-// TODO: implement
 int generateFuncDeclNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
 {
         if (tokens == NULL)
@@ -168,10 +168,22 @@ int generateFuncDeclNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* 
                 return 1;
         }
 
-        bool nameParsed = false;
-        bool hasPars = false;
+        // INFO:
+        // possible layouts (in order of canonicity):
+        // 1. <visibility> <type> <module> <id> [params]
+        // 2. <visibility> <type> <id> [params]
+        // 3. <type> <module> <id> [params]
+        // 4. <type> <id> [params]
+        // doesn't fit layout -> error
 
-        // TODO: here token loop
+        uint8_t step = 0;
+        bool requiresSpace = false;
+        for (uint64_t i = begin + 1; i < end; i++)
+        {
+                TTypes_t token = tokens[i].token;
+                printf("<%s> ", TOKENS[token]);
+        }
+        printf("\n");
 
         return 0;
 }
@@ -198,9 +210,25 @@ int generateVarDeclNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* n
                 return 1;
         }
 
-        bool nameParsed = false;
+        // INFO:
+        // possible layouts (random order):
+        // 1. <visibility> <type> <id> [initializer]
+        // 2. <visibility> <modifier> <type> <id> [initializer]
+        // 3. <visibility> <type> <array modifier> [initializer]
+        // 4. <type> <id> [initializer]
+        // 5. <modifier> <id> [initializer]
+        // 6. <type> <array modifier> [initializer]
+        // special cases for instance creation with ID as type:
+        // 7. <visibility> <id> <id> [initializer]
+        // 8. <id> <id> [initializer]
+        // doesn't fit layout -> error
 
-        // TODO: here token loop
+        for (uint64_t i = begin + 1; i < end; i++)
+        {
+                TTypes_t token = tokens[i].token;
+                printf("<%s> ", TOKENS[token]);
+        }
+        printf("\n");
 
         return 0;
 }
@@ -324,19 +352,19 @@ int generateNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
         }
         else if (isStmt)
         {
-                /*if (generateStatementNode() != 0)
+                if (generateStatementNode(tokens, begin, end, node) != 0)
                 {
                         return 1;
-                }*/
+                }
                 node->type = AST_STATEMENT;
                 printf("is stmt\n");
         }
         else
         {
-                /*if (generateExpressionNode() != 0)
+                if (generateExpressionNode(tokens, begin, end, node) != 0)
                 {
                         return 1;
-                }*/
+                }
                 node->type = AST_EXPRESSION;
                 printf("is expr\n");
         }

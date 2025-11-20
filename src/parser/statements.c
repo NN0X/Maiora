@@ -4,6 +4,7 @@
 #include "ast.h"
 #include "statements.h"
 #include "../defines.h"
+#include "../lexer/token.h"
 
 int generateScopeNode(ANode_t* node)
 {
@@ -92,6 +93,30 @@ int linkNodeToStatement(ANode_t* node, ANode_t* parent)
                 fprintf(stderr, "linkNodeToStatement: parent is NULL.\n");
                 return 1;
         }
+
+        return 0;
+}
+
+int generateStatementNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
+{
+        if (tokens == NULL)
+        {
+                return 1;
+        }
+        if (node == NULL)
+        {
+                return 1;
+        }
+
+        // TODO: decide statement type and enter appropriate generation function
+
+        // --- DEBUG ---
+        for (uint64_t i = begin + 1; i < end; i++)
+        {
+                TTypes_t token = tokens[i].token;
+                printf("<%s> ", TOKENS[token]);
+        }
+        printf("\n");
 
         return 0;
 }
