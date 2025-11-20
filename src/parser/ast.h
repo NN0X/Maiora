@@ -41,10 +41,15 @@ typedef enum VisibilityTypes
 {
         VIS_PRIVATE,
         VIS_PUBLIC,
+        VIS_ENTRY,
 } VTypes_t;
 
 typedef enum LiteralTypes
 {
+        LIT_NONE,
+
+        LIT_BOOL,
+
         LIT_SINT8,         // sint8
         LIT_SINT16,        // sint16
         LIT_SINT32,        // sint32

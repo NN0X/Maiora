@@ -147,6 +147,151 @@ int generateEmptyNode(ANode_t* node)
         return 0;
 }
 
+typedef enum FunctionDeclarationGenerationSteps
+{
+        FUNC_VIS_OR_TYPE_STEP = 0,
+        FUNC_TYPE_STEP,
+        FUNC_MODULE_OR_ID_STEP,
+        FUNC_ID_STEP,
+        FUNC_INITIALIZER_STEP,
+} FDGSteps_t;
+
+int funcDeclTypeStep(TTypes_t token, LTypes_t* type, FDGSteps_t* step, bool* requiresSpace)
+{
+        if (type == NULL)
+        {
+                return 1;
+        }
+        if (step == NULL)
+        {
+                return 1;
+        }
+        if (requiresSpace == NULL)
+        {
+                return 1;
+        }
+
+        if (token < TOK_TYPE_NONE || token > TOK_TYPE_UTF8)
+        {
+                fprintf(stderr, "expected type.\n");
+                return 1;
+        }
+
+        switch (token)
+        {
+                case TOK_TYPE_NONE:
+                        *type = LIT_NONE;
+                        break;
+                case TOK_TYPE_BOOL:
+                        *type = LIT_BOOL;
+                        break;
+                case TOK_TYPE_SINT8:
+                        *type = LIT_SINT8;
+                        break;
+                case TOK_TYPE_SINT16:
+                        *type = LIT_SINT16;
+                        break;
+                case TOK_TYPE_SINT32:
+                        *type = LIT_SINT32;
+                        break;
+                case TOK_TYPE_SINT64:
+                        *type = LIT_SINT64;
+                        break;
+                case TOK_TYPE_UINT8:
+                        *type = LIT_UINT8;
+                        break;
+                case TOK_TYPE_UINT16:
+                        *type = LIT_UINT16;
+                        break;
+                case TOK_TYPE_UINT32:
+                        *type = LIT_UINT32;
+                        break;
+                case TOK_TYPE_UINT64:
+                        *type = LIT_UINT64;
+                        break;
+                case TOK_TYPE_FLOAT8:
+                        *type = LIT_FLOAT8;
+                        break;
+                case TOK_TYPE_FLOAT16:
+                        *type = LIT_FLOAT16;
+                        break;
+                case TOK_TYPE_FLOAT32:
+                        *type = LIT_FLOAT32;
+                        break;
+                case TOK_TYPE_FLOAT64:
+                        *type = LIT_FLOAT64;
+                        break;
+                case TOK_TYPE_ASCII:
+                        *type = LIT_ASCII;
+                        break;
+                case TOK_TYPE_UTF8:
+                        *type = LIT_UTF8;
+                        break;
+                default:
+                        return 1;
+        }
+
+        *step = FUNC_MODULE_OR_ID_STEP;
+        *requiresSpace = true;
+
+        return 0;
+}
+
+int funcDeclVisibilityOrTypeStep(TTypes_t token, VTypes_t* visibility, LTypes_t* type, FDGSteps_t* step, bool* requiresSpace)
+{
+        if (visibility == NULL)
+        {
+                return 1;
+        }
+        if (type == NULL)
+        {
+                return 1;
+        }
+        if (step == NULL)
+        {
+                return 1;
+        }
+        if (requiresSpace == NULL)
+        {
+                return 1;
+        }
+
+        if (token >= TOK_KEYW_PUBLIC && token <= TOK_KEYW_ENTRY)
+        {
+                switch (token)
+                {
+                        case TOK_KEYW_PUBLIC:
+                                *visibility = VIS_PUBLIC;
+                                break;
+                        case TOK_KEYW_PRIVATE:
+                                *visibility = VIS_PRIVATE;
+                                break;
+                        case TOK_KEYW_ENTRY:
+                                *visibility = VIS_ENTRY;
+                                break;
+                        default:
+                                return 1;
+                }
+                *step = FUNC_TYPE_STEP;
+                *requiresSpace = true;
+        }
+        else if (token >= TOK_TYPE_NONE && token <= TOK_TYPE_UTF8)
+        {
+                if (funcDeclTypeStep(token, type, step, requiresSpace) != 0)
+                {
+                        return 1;
+                }
+        }
+        else
+        {
+                fprintf(stderr, "expected vis or type.\n");
+                return 1;
+        }
+
+        return 0;
+}
+
+
 int generateFuncDeclNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
 {
         if (tokens == NULL)
@@ -176,7 +321,7 @@ int generateFuncDeclNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* 
         // 4. <type> <id>([params])
         // doesn't fit layout -> error
 
-        uint8_t step = 0;
+        FDGSteps_t step = 0;
         bool requiresSpace = false;
         bool requiresFromModule = false;
         bool requiresLPar = false;
@@ -236,35 +381,19 @@ int generateFuncDeclNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* 
 
                 switch (step)
                 {
-                        case 0: // vis or type
-                                if (token >= TOK_KEYW_PUBLIC && token <= TOK_KEYW_ENTRY)
+                        case FUNC_VIS_OR_TYPE_STEP:
+                                if (funcDeclVisibilityOrTypeStep(token, &visibility, &returnType, &step, &requiresSpace) != 0)
                                 {
-                                        // TODO: take care of vis
-                                        step = 1;
-                                }
-                                else if (token >= TOK_TYPE_NONE && token <= TOK_TYPE_UTF8)
-                                {
-                                        // TODO: take care of type
-                                        step = 2;
-                                }
-                                else
-                                {
-                                        fprintf(stderr, "expected vis or type.\n");
                                         return 1;
                                 }
-                                requiresSpace = true;
                                 break;
-                        case 1: // type when vis present
-                                if (token < TOK_TYPE_NONE || token > TOK_TYPE_UTF8)
+                        case FUNC_TYPE_STEP:
+                                if (funcDeclTypeStep(token, &returnType, &step, &requiresSpace) != 0)
                                 {
-                                        fprintf(stderr, "expected type.\n");
                                         return 1;
                                 }
-                                // TODO: take care of type
-                                step = 2;
-                                requiresSpace = true;
                                 break;
-                        case 2: // module or id
+                        case FUNC_MODULE_OR_ID_STEP:
                                 if (token != TOK_ID)
                                 {
                                         fprintf(stderr, "expected id.\n");
@@ -273,27 +402,27 @@ int generateFuncDeclNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* 
                                 if (i + 1 < end && tokens[i + 1].token == TOK_OP_FROM_MODULE)
                                 {
                                         // TODO: take care of module
-                                        step = 3;
+                                        step = FUNC_ID_STEP;
                                         requiresFromModule = true;
                                 }
                                 else
                                 {
                                         // TODO: take care of id
-                                        step = 4;
+                                        step = FUNC_INITIALIZER_STEP;
                                         requiresLPar = true;
                                 }
                                 break;
-                        case 3: // id when module present
+                        case FUNC_ID_STEP:
                                 if (token != TOK_ID)
                                 {
                                         fprintf(stderr, "expected id.\n");
                                         return 1;
                                 }
                                 // TODO: take care of id
-                                step = 4;
+                                step = FUNC_INITIALIZER_STEP;
                                 requiresLPar = true;
                                 break;
-                        case 4: // initializer
+                        case FUNC_INITIALIZER_STEP:
                                 // TODO: take care of initializer
                                 break;
                         default:
