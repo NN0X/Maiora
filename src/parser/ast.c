@@ -9,6 +9,8 @@
 #include "../lexer/token.h"
 
 // TODO: implement node generation functions
+// TODO: free tokens after digest
+// TODO: move requires in generateFuncDecl to a struct
 
 int splitByGroups(LTok_t* tokens, uint64_t* indexes, uint64_t* numIndexes, uint64_t begin, uint64_t end)
 {
@@ -291,6 +293,43 @@ int funcDeclVisibilityOrTypeStep(TTypes_t token, VTypes_t* visibility, LTypes_t*
         return 0;
 }
 
+int funcDeclModuleStep(LTok_t token, AFDec_t* data, FDGSteps_t* step, bool* requiresFromModule)
+{
+        if (data == NULL)
+        {
+                return 1;
+        }
+        if (step == NULL)
+        {
+                return 1;
+        }
+        if (requiresFromModule == NULL)
+        {
+                return 1;
+        }
+
+        if (token.token != TOK_ID)
+        {
+                return 1;
+        }
+
+        if(token.len <= 0)
+        {
+                return 1;
+        }
+
+        data->module = (char*)malloc(sizeof(char) * token.len);
+        if (data->module == NULL)
+        {
+                return 1;
+        }
+        data->moduleLen = token.len;
+
+        *step = FUNC_ID_STEP;
+        *requiresFromModule = true;
+
+        return 0;
+}
 
 int generateFuncDeclNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
 {
@@ -401,9 +440,10 @@ int generateFuncDeclNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* 
                                 }
                                 if (i + 1 < end && tokens[i + 1].token == TOK_OP_FROM_MODULE)
                                 {
-                                        // TODO: take care of module
-                                        step = FUNC_ID_STEP;
-                                        requiresFromModule = true;
+                                        if (funcDeclModuleStep(tokens[i], funcDeclData, &step, &requiresFromModule) != 0)
+                                        {
+                                                return 1;
+                                        }
                                 }
                                 else
                                 {

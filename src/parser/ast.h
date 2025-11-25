@@ -76,6 +76,8 @@ typedef enum LiteralTypes
 
 typedef struct AstFunctionDeclare
 {
+        char* module;
+        uint64_t moduleLen;
         char* name;
         uint64_t nameLen;
 
