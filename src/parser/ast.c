@@ -149,13 +149,59 @@ int generateEmptyNode(ANode_t* node)
         return 0;
 }
 
+int generateVarDeclNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
+{
+        if (tokens == NULL)
+        {
+                return 1;
+        }
+        if (node == NULL)
+        {
+                return 1;
+        }
+
+        VTypes_t visibility = VIS_PRIVATE;
+        VMods_t modifier = VAR_NONE;
+        LTypes_t varType;
+
+        AVDec_t* varDeclData = (AVDec_t*)malloc(sizeof(AVDec_t));
+        if (varDeclData == NULL)
+        {
+                fprintf(stderr, "malloc failed for varDeclData.\n");
+                return 1;
+        }
+
+        // INFO:
+        // possible layouts (random order):
+        // 1. <visibility> <type> <id> [initializer]
+        // 2. <visibility> <modifier> <type> <id> [initializer]
+        // 3. <visibility> <type> <array modifier> [initializer]
+        // 4. <type> <id> [initializer]
+        // 5. <modifier> <id> [initializer]
+        // 6. <type> <array modifier> [initializer]
+        // special cases for instance creation with ID as type:
+        // 7. <visibility> <id> <id> [initializer]
+        // 8. <id> <id> [initializer]
+        // doesn't fit layout -> error
+
+        for (uint64_t i = begin + 1; i < end; i++)
+        {
+                TTypes_t token = tokens[i].token;
+                printf("<%s> ", TOKENS[token]);
+        }
+        printf("\n");
+
+        return 0;
+}
+
 typedef enum FunctionDeclarationGenerationSteps
 {
         FUNC_VIS_OR_TYPE_STEP = 0,
         FUNC_TYPE_STEP,
         FUNC_MODULE_OR_ID_STEP,
         FUNC_ID_STEP,
-        FUNC_INITIALIZER_STEP,
+        FUNC_PARAMS_STEP,
+        FUNC_END_STEP,
 } FDGSteps_t;
 
 int funcDeclTypeStep(TTypes_t token, LTypes_t* type, FDGSteps_t* step, bool* requiresSpace)
@@ -308,11 +354,6 @@ int funcDeclModuleStep(LTok_t token, AFDec_t* data, FDGSteps_t* step, bool* requ
                 return 1;
         }
 
-        if (token.token != TOK_ID)
-        {
-                return 1;
-        }
-
         if(token.len <= 0)
         {
                 return 1;
@@ -327,6 +368,116 @@ int funcDeclModuleStep(LTok_t token, AFDec_t* data, FDGSteps_t* step, bool* requ
 
         *step = FUNC_ID_STEP;
         *requiresFromModule = true;
+
+        return 0;
+}
+
+int funcDeclIDStep(LTok_t token, AFDec_t* data, FDGSteps_t* step, bool* requiresLPar)
+{
+        if (data == NULL)
+        {
+                return 1;
+        }
+        if (step == NULL)
+        {
+                return 1;
+        }
+        if (requiresLPar == NULL)
+        {
+                return 1;
+        }
+
+        if(token.len <= 0)
+        {
+                return 1;
+        }
+
+        data->name = (char*)malloc(sizeof(char) * token.len);
+        if (data->name == NULL)
+        {
+                return 1;
+        }
+        data->nameLen = token.len;
+
+        *step = FUNC_PARAMS_STEP;
+        *requiresLPar = true;
+
+        return 0;
+}
+
+int funcDeclParamsStep(LTok_t* tokens, uint64_t* begin, uint64_t end, AFDec_t* data,
+                       FDGSteps_t* step, bool* requiresRPar)
+{
+        if (tokens == NULL)
+        {
+                return 1;
+        }
+        if (begin == NULL)
+        {
+                return 1;
+        }
+        if (data == NULL)
+        {
+                return 1;
+        }
+        if (*begin >= end)
+        {
+                return 1;
+        }
+
+        data->params = (ANode_t**)malloc(sizeof(ANode_t*) * (end - *begin));
+        if (data->params == NULL)
+        {
+                return 1;
+        }
+        data->numParams = 0;
+
+        uint64_t currentBegin = *begin;
+        for (uint64_t i = *begin; i < end - 1; i++)
+        {
+                TTypes_t nextToken = tokens[i + 1].token;
+                if (nextToken == TOK_OP_RPAR)
+                {
+                        if (tokens[i].token == TOK_TYPE_NONE)
+                        {
+                                break;
+                        }
+                        ANode_t* paramNode = (ANode_t*)malloc(sizeof(ANode_t));
+                        if (paramNode == NULL)
+                        {
+                                return 1;
+                        }
+                        if (generateVarDeclNode(tokens, currentBegin, i, paramNode) != 0)
+                        {
+                                return 1;
+                        }
+                        data->params[data->numParams] = paramNode;
+                        data->numParams++;
+
+                        *begin = i;
+                        break;
+                }
+
+                if (nextToken == TOK_OP_COMMA)
+                {
+                        ANode_t* paramNode = (ANode_t*)malloc(sizeof(ANode_t));
+                        if (paramNode == NULL)
+                        {
+                                return 1;
+                        }
+                        if (generateVarDeclNode(tokens, currentBegin, i, paramNode) != 0)
+                        {
+                                return 1;
+                        }
+                        data->params[data->numParams] = paramNode;
+                        data->numParams++;
+
+                        currentBegin = i + 1;
+                }
+        }
+
+        *step = FUNC_END_STEP;
+        *requiresRPar = true;
 
         return 0;
 }
@@ -447,9 +598,10 @@ int generateFuncDeclNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* 
                                 }
                                 else
                                 {
-                                        // TODO: take care of id
-                                        step = FUNC_INITIALIZER_STEP;
-                                        requiresLPar = true;
+                                        if (funcDeclIDStep(tokens[i], funcDeclData, &step, &requiresLPar) != 0)
+                                        {
+                                                return 1;
+                                        }
                                 }
                                 break;
                         case FUNC_ID_STEP:
@@ -458,62 +610,21 @@ int generateFuncDeclNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* 
                                         fprintf(stderr, "expected id.\n");
                                         return 1;
                                 }
-                                // TODO: take care of id
-                                step = FUNC_INITIALIZER_STEP;
-                                requiresLPar = true;
+                                if (funcDeclIDStep(tokens[i], funcDeclData, &step, &requiresLPar) != 0)
+                                {
+                                        return 1;
+                                }
                                 break;
-                        case FUNC_INITIALIZER_STEP:
-                                // TODO: take care of initializer
+                        case FUNC_PARAMS_STEP:
+                                if (funcDeclParamsStep(tokens, &i, end, funcDeclData, &step, &requiresRPar) != 0)
+                                {
+                                        return 1;
+                                }
                                 break;
                         default:
                                 fprintf(stderr, "unexpected step.\n");
                                 return 1;
                 }
-        }
-        printf("\n");
-
-        return 0;
-}
-
-int generateVarDeclNode(LTok_t* tokens, uint64_t begin, uint64_t end, ANode_t* node)
-{
-        if (tokens == NULL)
-        {
-                return 1;
-        }
-        if (node == NULL)
-        {
-                return 1;
-        }
-
-        VTypes_t visibility = VIS_PRIVATE;
-        VMods_t modifier = VAR_NONE;
-        LTypes_t varType;
-
-        AVDec_t* varDeclData = (AVDec_t*)malloc(sizeof(AVDec_t));
-        if (varDeclData == NULL)
-        {
-                fprintf(stderr, "malloc failed for varDeclData.\n");
-                return 1;
-        }
-
-        // INFO:
-        // possible layouts (random order):
-        // 1. <visibility> <type> <id> [initializer]
-        // 2. <visibility> <modifier> <type> <id> [initializer]
-        // 3. <visibility> <type> <array modifier> [initializer]
-        // 4. <type> <id> [initializer]
-        // 5. <modifier> <id> [initializer]
-        // 6. <type> <array modifier> [initializer]
-        // special cases for instance creation with ID as type:
-        // 7. <visibility> <id> <id> [initializer]
-        // 8. <id> <id> [initializer]
-        // doesn't fit layout -> error
-
-        for (uint64_t i = begin + 1; i < end; i++)
-        {
-                TTypes_t token = tokens[i].token;
-                printf("<%s> ", TOKENS[token]);
         }
         printf("\n");
 
