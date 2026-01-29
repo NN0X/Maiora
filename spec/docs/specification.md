@@ -1,4 +1,4 @@
-# Maiora Specification v0.1.3alpha
+# Maiora Specification v0.1.4alpha
 
 ## Types
 
@@ -246,7 +246,7 @@ entry sint64 main(none)
 }
 ```
 
-Above code will not compile, because globalVariable is not attached to any function instance.
+Above code will not compile, because globalVariable is not attached to any function scope.
 
 
 ### enum
@@ -448,8 +448,10 @@ entry sint32 main(none)
 }
 ```
 
-All writes to address variables in async functions are implicitly locked.
-To avoid implicit locking, declare async function with unsafe keyword.
+#### Implicit locking in async functions
+
+All writes to addresses and reads from adresses and references are implicitly locked when used in async functions. This is necessary to provide safe-by-default asynchronous operations.
+Unsafe keyword can be used to disable this behavior.
 
 ```maiora
 private async none increment(address sint64 counter)
@@ -591,11 +593,88 @@ Hello, Maiora!
 Goodbye, Maiora!
 ```
 
+Instances can also be created with sugar syntax:
+```maiora
+entry sint64 main(none)
+{
+    private printMessage printHello = ascii"Hello, Maiora!";
+    private printMessage printGoodbye = ascii"Goodbye, Maiora!";
+
+    executeFunctionWithInstance(printHello); // Calls the function instance with "Hello, Maiora!"
+    executeFunctionWithInstance(printGoodbye); // Calls the function instance with "Goodbye, Maiora!"
+
+    return 0s;
+}
+```
+
+#### instance vs function keyword
+
 Why pass functions with instance keyword and not function keyword?
 When passing instance as arguments it conveys another information that can be used before calling the function.
 So in conclusion, when passing a function only to call it the better way is to use function keyword.
 When passing a function to be used as a data object, the better way is to use instance keyword.
 
+#### Stack vs Heap allocation of instances
+
+IMPORTANT: Instances are by default allocated on the stack. To allocate instance on the heap use heap keyword.
+```maiora
+entry sint64 main(none)
+{
+    private instance stackInstance = printMessage(ascii"Stack allocated instance");
+    private instance heapInstance = heap printMessage(ascii"Heap allocated instance");
+
+    call stackInstance;
+    call heapInstance;
+
+    return 0s;
+}
+```
+and similarly with sugar syntax:
+```maiora
+entry sint64 main(none)
+{
+    private printMessage stackInstance = ascii"Stack allocated instance";
+    private printMessage heapInstance =  heap ascii"Heap allocated instance";
+
+    call stackInstance;
+    call heapInstance;
+
+    return 0s;
+}
+```
+
+#### Composition using instances
+
+Inlining functions within other functions allows for OOP-like composition.
+
+```maiora
+private none engine(sint64 power)
+{
+    public none start(none)
+    {
+        IO::print(ascii"Engine with power {power} started.");
+    }
+}
+
+private none car(ascii model, sint64 enginePower)
+{
+    inline engine(enginePower);
+
+    public none drive(none)
+    {
+        IO::print(ascii"Driving car model {model}.");
+    }
+}
+
+entry sint64 main(none)
+{
+    private instance myCar = car(ascii"SuperCar", 500s);
+    myCar.start(none);
+    myCar.drive(none);
+
+    return 0s;
+}
+```
 
 ### blocks
 
@@ -646,6 +725,10 @@ entry sint64 main(none)
 }
 ```
 
+## Standard Module Library
+
+The Standard Module Library (SML) provides a set of pre-defined modules and functions that can be imported and used in Maiora programs. SML modules are maiora source files that have to be provided by the compiler provider. See [SML Specification](sml_specification.md) for more details.
+
 ## Error handling
 
-Maiora does not have any language-level error handling mechanisms like exceptions or try-catch blocks. Instead, error handling is implemented using instances in Errors module.
+Maiora does not have any language-level error handling mechanisms like exceptions or try-catch blocks. Instead, error handling is left to be implemented by SML providers.
