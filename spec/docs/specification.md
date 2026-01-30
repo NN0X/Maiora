@@ -450,7 +450,7 @@ entry sint32 main(none)
 
 #### Implicit locking in async functions
 
-All writes to addresses and reads from adresses and references are implicitly locked when used in async functions. This is necessary to provide safe-by-default asynchronous operations.
+All writes to addresses and reads from adresses and references are implicitly locked when used in async functions. This is necessary to provide safe-by-default asynchronous operations. Locking is done with canonical ordering to prevent deadlocks.
 Unsafe keyword can be used to disable this behavior.
 
 ```maiora
