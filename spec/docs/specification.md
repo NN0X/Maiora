@@ -1,4 +1,4 @@
-# Maiora Specification v0.1.4alpha
+# Maiora Specification v0.2alpha
 
 ## Types
 
@@ -451,6 +451,9 @@ entry sint32 main(none)
 #### Implicit locking in async functions
 
 All writes to addresses and reads from adresses and references are implicitly locked when used in async functions. This is necessary to provide safe-by-default asynchronous operations. Locking is done with canonical ordering to prevent deadlocks.
+
+NOTE: This will be modified in the future to move from implicit locking to compiler static analysis that would determine if race conditions are possible or not.
+
 Unsafe keyword can be used to disable this behavior.
 
 ```maiora
@@ -482,6 +485,36 @@ If async is not joined before going out of scope, the program will automatically
 ## Key concepts
 
 ### Safe by default
+
+Maiora safe by default system is designed to prevent memory safety violations at compile time. If a memory safety violation is detected, the program will not compile.
+It is not the responsibility of the programming language to handle program logic violations. These are the responsibility of the programmer.
+
+Below are the key principles necessary to understand Maiora safe by default philosophy.
+
+#### Two-tiered error hierarchy
+
+Maiora follows a two-tiered error hierarchy:
+- logic errors (Tier 1)
+- hardware errors (Tier 0)
+
+#### Logic errors (Tier 1)
+
+Logic errors are split into two categories:
+- memory safety violations (including data-races)
+- program logic violations
+
+#### Hardware errors (Tier 0)
+
+Hardware errors include issues such as out-of-memory conditions, hardware faults, and other low-level errors that are outside the control of the programming language. Those errors are considered irrecoverable and have to lead to immediate program termination.
+
+#### Offensive approach
+
+Maiora takes an offensive approach to error handling. This means that the program should be designed to avoid errors altogether, rather than trying to recover from them. If an error occurs, the program should terminate immediately, rather than attempting to continue execution in an undefined state.
+
+#### Practicality of offensive approach
+
+In practice, this means that an ideal Maiora program above certain level of complexity should use a two-tiered structure where there is one supervisor process that is responsible only for monitoring and restarting worker processes that do the actual work. This way, if a worker process encounters a logic error and terminates, the supervisor process can simply restart it without affecting the overall system.
+Note that above does not mean that Maiora programs cannot be written as monolithic applications. It simply means that the recommended approach for building robust systems is to use a supervisor-worker architecture and Maiora is designed to facilitate that approach.
 
 ### Functions as data objects
 
@@ -731,4 +764,4 @@ The Standard Module Library (SML) provides a set of pre-defined modules and func
 
 ## Error handling
 
-Maiora does not have any language-level error handling mechanisms like exceptions or try-catch blocks. Instead, error handling is left to be implemented by SML providers.
+Maiora does not have any language-level error handling mechanisms like exceptions or try-catch blocks. Instead, error handling is left to be implemented by SML providers, according to the SML Specification.
