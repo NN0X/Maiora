@@ -1,4 +1,4 @@
-# Maiora Specification v0.2alpha
+# Maiora Specification v0.3alpha
 
 ## Types
 
@@ -429,7 +429,12 @@ entry sint64 main(none)
 
 ```
 
-### async, join, spawn
+### Concurrency
+
+Maiora supports two concurrency models, multithreading and multiprocessing.
+
+#### Multithreading
+
 The `async` keyword is used to define a function that will be executed asynchronously and the variable that will hold the async instance. The `spawn` keyword is used to create a new asynchronous task, and the `join` keyword is used to wait for an asynchronous task to complete.
 
 Example of using async, spawn, and join keywords:
@@ -448,7 +453,7 @@ entry sint32 main(none)
 }
 ```
 
-#### Implicit locking in async functions
+##### Implicit locking in async functions
 
 All writes to addresses and reads from adresses and references are implicitly locked when used in async functions. This is necessary to provide safe-by-default asynchronous operations. Locking is done with canonical ordering to prevent deadlocks.
 
@@ -481,6 +486,45 @@ entry sint32 main(none)
 }
 ```
 If async is not joined before going out of scope, the program will automatically join it.
+
+#### Multiprocessing
+
+The `process` keyword is used to define a variable that is a handle to the OS process. The `launch` keyword is used to create a new process with specified function as the entry point, and the joining follows the same rules as threading, with `join` keyword. Processes are isolated from each other and do not share memory space. Inter-process communication mechanisms have to be used to communicate between processes. Those mechanisms are not defined by the language specification and are left to SML.
+
+Functions used with process keyword are required to return sint64 values to indicate process exit status and are limited to arguments that are serializable, so passing addresses, references, instances and functions is not allowed.
+
+Example of using process and launch keywords:
+```maiora
+private sint64 processAdd(sint64 a, sint64 b)
+{
+    return a + b;
+}
+
+private sint64 someProcessFunction(none)
+{
+    return 0s;
+}
+
+entry sint32 main(none)
+{
+    private process processTask = launch processAdd(5s, 10s);
+    private sint64 result = join processTask;
+
+    private process anotherProcessTask = launch someProcessFunction(none);
+    private sint64 anotherResult = join anotherProcessTask;
+    if (anotherResult == 0s)
+    {
+        IO::print(ascii"someProcessFunction completed successfully.");
+    }
+    else
+    {
+        IO::print(ascii"someProcessFunction failed with code: {anotherResult}");
+    }
+
+    return 0s;
+}
+```
+Note that, while process functions are recommended to only return error codes, those error codes can be used to return any information that fits into sint64 type.
 
 ## Key concepts
 
