@@ -7,50 +7,56 @@
 #include "token.h"
 #include "writer.h"
 
+#include "../errors.h"
+
 int main(int argc, char* argv[])
 {
         // expected call: ./main <input_file>.mai <output_file>.tok
 
         if (argc != 3)
         {
-                fprintf(stderr, "Usage: %s <input_file>.mai <output_file>.tok\n", argv[0]);
+                ERROR_LEX(LEX_ARGS_INCORRECT, argv[0]);
                 return 1;
         }
 
         LMeta_t metadata;
 
         FILE* file;
-        if (openSourceFile(&file, argv[1], &metadata) == 1)
+        LErr_t code = openSourceFile(&file, argv[1], &metadata);
+        if (code != LEX_SUCCESS)
         {
-                fprintf(stderr, "Failed to open source file.\n");
+                ERROR_LEX(code, NULL);
                 return 1;
         }
 
         char* src;
-        if (loadSourceFile(&src, file, &metadata) == 1)
+        code = loadSourceFile(&src, file, &metadata);
+        if (code != LEX_SUCCESS)
         {
-                fprintf(stderr, "Failed to load source file.\n");
+                ERROR_LEX(code, NULL);
                 fclose(file);
                 return 1;
         }
         fclose(file);
 
         LData_t lexerData;
-        if (tokenizeSource(&lexerData, src, &metadata) == 1)
+        code = tokenizeSource(&lexerData, src, &metadata);
+        if (code != LEX_SUCCESS)
         {
-                fprintf(stderr, "Failed to tokenize source file.\n");
+                ERROR_LEX(code, NULL);
                 free(src);
                 return 1;
         }
         free(src);
 
-        // -- DEBUG INFO ---
+#ifdef LOG_VERBOSE
         writeTokensToOut(stdout, &metadata, &lexerData);
-        // ----------------
+#endif // LOG_VERBOSE
 
-        if (writeTokensToFile(&metadata, &lexerData, argv[2]) == 1)
+        code = writeTokensToFile(&metadata, &lexerData, argv[2]);
+        if (code != LEX_SUCCESS)
         {
-                fprintf(stderr, "Failed to write tokens to output file.\n");
+                ERROR_LEX(code, NULL);
                 for (uint64_t i = 0; i < metadata.numTokens; i++)
                 {
                         free(lexerData.tokens[i].data);
